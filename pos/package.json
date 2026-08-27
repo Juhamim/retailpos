@@ -1,0 +1,24 @@
+{
+  "name": "retailflow-pos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Modern. Fast. Offline-Ready. Built for Retail.",
+  "scripts": {
+    "dev": "pnpm --filter @retailflow/web dev",
+    "dev:web": "pnpm --filter @retailflow/web dev",
+    "dev:desktop": "pnpm --filter @retailflow/desktop dev",
+    "build:web": "pnpm --filter @retailflow/web build",
+    "build:desktop": "pnpm --filter @retailflow/desktop build",
+    "build:packages": "pnpm --filter \"@retailflow/*\" build",
+    "db:generate": "pnpm --filter @retailflow/database generate",
+    "db:migrate": "pnpm --filter @retailflow/database migrate",
+    "db:push": "pnpm --filter @retailflow/database push",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "clean": "pnpm -r exec rm -rf node_modules dist .next .turbo"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  }
+}

@@ -1,0 +1,27 @@
+[package]
+name = "retailflow-pos"
+version = "1.0.0"
+description = "Modern. Fast. Offline-Ready. Built for Retail."
+authors = ["RetailFlow"]
+license = "MIT"
+repository = ""
+edition = "2021"
+
+[lib]
+name = "retailflow_pos_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { version = "1", features = [] }
+
+[dependencies]
+tauri = { version = "1", features = ["shell-open", "fs-all", "path-all"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
