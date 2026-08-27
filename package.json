@@ -1,0 +1,20 @@
+{
+  "name": "retailflow-pos-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RetailFlow POS Root Workspace Wrapper",
+  "scripts": {
+    "dev": "pnpm --dir pos dev:web",
+    "dev:web": "pnpm --dir pos dev:web",
+    "dev:desktop": "pnpm --dir pos dev:desktop",
+    "build:web": "pnpm --dir pos build:web",
+    "build:desktop": "pnpm --dir pos build:desktop",
+    "build:packages": "pnpm --dir pos build:packages",
+    "db:generate": "pnpm --dir pos db:generate",
+    "db:migrate": "pnpm --dir pos db:migrate",
+    "db:push": "pnpm --dir pos db:push",
+    "lint": "pnpm --dir pos lint",
+    "typecheck": "pnpm --dir pos typecheck",
+    "clean": "pnpm --dir pos clean"
+  }
+}

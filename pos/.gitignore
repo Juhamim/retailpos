@@ -1,0 +1,22 @@
+node_modules
+dist
+.next
+.turbo
+*.db
+*.db-journal
+*.db-wal
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+# Rust / Tauri build - ignore everything in target except the release exe and installer
+apps/desktop/src-tauri/target/*
+!apps/desktop/src-tauri/target/release
+apps/desktop/src-tauri/target/release/*
+!apps/desktop/src-tauri/target/release/RetailFlow POS.exe
+!apps/desktop/src-tauri/target/release/bundle
+apps/desktop/src-tauri/target/release/bundle/*
+!apps/desktop/src-tauri/target/release/bundle/nsis
+apps/desktop/src-tauri/target/release/bundle/nsis/*
+!apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+Cargo.lock
