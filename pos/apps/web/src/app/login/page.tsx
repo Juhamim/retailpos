@@ -160,9 +160,9 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-colors shadow-lg shadow-blue-600/10"
+                className="w-full h-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-90 active:scale-[0.98] text-white rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-indigo-500/25 tracking-wide mt-2"
               >
-                Access POS Dashboard
+                Sign In to Dashboard
               </button>
             </form>
           ) : (
@@ -173,7 +173,7 @@ export default function LoginPage() {
                   <div
                     key={idx}
                     className={`w-4 h-4 rounded-full border-2 border-slate-600 transition-all ${
-                      pin.length > idx ? "bg-blue-500 border-blue-500 scale-110 shadow-lg shadow-blue-500/50" : "bg-transparent"
+                      pin.length > idx ? "bg-indigo-500 border-indigo-500 scale-110 shadow-lg shadow-indigo-500/50" : "bg-transparent"
                     }`}
                   />
                 ))}
@@ -185,30 +185,51 @@ export default function LoginPage() {
                   <button
                     key={val}
                     onClick={() => handlePinKey(val)}
-                    className="w-16 h-16 rounded-full bg-slate-900 hover:bg-slate-800 text-lg font-bold flex items-center justify-center border border-slate-800/80 active:scale-95 transition-all"
+                    className="w-16 h-16 rounded-full bg-slate-900 hover:bg-slate-800 text-lg font-bold flex items-center justify-center border border-slate-800/80 active:scale-95 transition-all text-slate-100 hover:text-white"
                   >
                     {val}
                   </button>
                 ))}
                 <button
                   onClick={() => setPin("")}
-                  className="w-16 h-16 rounded-full text-xs font-bold text-slate-500 hover:text-slate-300 flex items-center justify-center"
+                  className="w-16 h-16 rounded-full text-xs font-bold text-slate-500 hover:text-slate-300 flex items-center justify-center transition-colors"
                 >
                   Clear
                 </button>
                 <button
                   onClick={() => handlePinKey("0")}
-                  className="w-16 h-16 rounded-full bg-slate-900 hover:bg-slate-800 text-lg font-bold flex items-center justify-center border border-slate-800/80 active:scale-95 transition-all"
+                  className="w-16 h-16 rounded-full bg-slate-900 hover:bg-slate-800 text-lg font-bold flex items-center justify-center border border-slate-800/80 active:scale-95 transition-all text-slate-100 hover:text-white"
                 >
                   0
                 </button>
                 <button
                   onClick={handleBackspace}
-                  className="w-16 h-16 rounded-full text-xs font-bold text-slate-500 hover:text-slate-300 flex items-center justify-center"
+                  className="w-16 h-16 rounded-full text-xs font-bold text-slate-500 hover:text-slate-300 flex items-center justify-center transition-colors"
                 >
                   Delete
                 </button>
               </div>
+
+              <button
+                onClick={() => {
+                  if (pin.length === 4) {
+                    const authenticatedUser = verifyPin(pin);
+                    if (authenticatedUser) {
+                      setCurrentUser(authenticatedUser);
+                      setIsLocked(false);
+                      window.location.href = "/dashboard";
+                    } else {
+                      setError("Incorrect PIN");
+                      setPin("");
+                    }
+                  } else {
+                    setError("Please enter a 4-digit PIN");
+                  }
+                }}
+                className="w-full h-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-90 active:scale-[0.98] text-white rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-indigo-500/25 tracking-wide"
+              >
+                Verify PIN & Sign In
+              </button>
             </div>
           )}
 
