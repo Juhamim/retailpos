@@ -17,16 +17,7 @@ interface ExpenseState {
   getTotalExpenses: () => number;
 }
 
-const INITIAL_EXPENSES: Expense[] = [
-  { id: "exp-1", amount: 25000, category: ExpenseCategory.RENT, description: "Monthly shop rent - August 2026", date: "2026-08-01", paymentMethod: PaymentMethod.BANK_TRANSFER, userId: "user-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: "exp-2", amount: 3500, category: ExpenseCategory.ELECTRICITY, description: "Electricity bill - August", date: "2026-08-05", paymentMethod: PaymentMethod.UPI, userId: "user-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: "exp-3", amount: 45000, category: ExpenseCategory.SALARY, description: "Staff salary - August", date: "2026-08-01", paymentMethod: PaymentMethod.BANK_TRANSFER, userId: "user-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: "exp-4", amount: 2000, category: ExpenseCategory.TRANSPORTATION, description: "Delivery van fuel", date: "2026-08-10", paymentMethod: PaymentMethod.CASH, userId: "user-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: "exp-5", amount: 1500, category: ExpenseCategory.MAINTENANCE, description: "AC maintenance service", date: "2026-08-12", paymentMethod: PaymentMethod.CASH, userId: "user-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: "exp-6", amount: 8000, category: ExpenseCategory.MARKETING, description: "Local newspaper ad - weekly", date: "2026-08-15", paymentMethod: PaymentMethod.UPI, userId: "user-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: "exp-7", amount: 5000, category: ExpenseCategory.INVENTORY, description: "Shelf repair and new fixtures", date: "2026-08-18", paymentMethod: PaymentMethod.CASH, userId: "user-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: "exp-8", amount: 1200, category: ExpenseCategory.OTHER, description: "Internet and phone bill", date: "2026-08-20", paymentMethod: PaymentMethod.UPI, userId: "user-1", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-];
+const INITIAL_EXPENSES: Expense[] = [];
 
 export const useExpenseStore = create<ExpenseState>()(
   persist(

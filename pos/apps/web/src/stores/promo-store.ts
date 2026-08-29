@@ -29,51 +29,7 @@ interface PromoStoreState {
   deleteRule: (id: string) => void;
 }
 
-const INITIAL_RULES: PromoRule[] = [
-  {
-    id: "promo-1",
-    name: "Mega BOGO: Buy 2 Coca-Cola, Get 1 Free!",
-    type: "bogo",
-    conditions: {
-      buyProductId: "p1", // Coca-Cola
-      buyQty: 2,
-    },
-    actions: {
-      freeProductId: "p1",
-      freeQty: 1,
-    },
-    status: "active",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "promo-2",
-    name: "Weekend Special: 10% Off Beverages",
-    type: "category_discount",
-    conditions: {
-      categoryId: "cat1", // Beverages
-      minQty: 1,
-    },
-    actions: {
-      discountPercent: 10,
-    },
-    status: "active",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "promo-3",
-    name: "Volume Deal: Buy 3+ Organic Milk, get each at ₹40 (Save ₹10/ea)",
-    type: "volume_discount",
-    conditions: {
-      buyProductId: "p2", // Organic Milk
-      minQty: 3,
-    },
-    actions: {
-      volumePrice: 40,
-    },
-    status: "active",
-    createdAt: new Date().toISOString(),
-  },
-];
+const INITIAL_RULES: PromoRule[] = [];
 
 export const usePromoStore = create<PromoStoreState>()(
   persist(
