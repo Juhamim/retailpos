@@ -3,7 +3,8 @@
     "beforeDevCommand": "pnpm --filter @retailflow/web dev",
     "devPath": "http://localhost:3000",
     "beforeBuildCommand": "pnpm --filter @retailflow/web build:export",
-    "distDir": "../../web/out"
+    "distDir": "../../web/out",
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "RetailFlow POS",
@@ -16,9 +17,13 @@
         "all": false,
         "open": true
       },
+      "dialog": {
+        "all": true,
+        "open": true
+      },
       "fs": {
         "all": true,
-        "scope": ["$APPDATA/**", "$DESKTOP/**"]
+        "scope": ["$APPDATA/**", "$DESKTOP/**", "**"]
       },
       "path": {
         "all": true

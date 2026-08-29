@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { Plus, Search, Edit, Trash2, Package, X, Check, AlertCircle, Upload } from "lucide-react";
 import Link from "next/link";
 import { useProductStore } from "@/stores/product-store";
+import { useSupplierStore } from "@/stores/supplier-store";
 import type { ProductWithCategory } from "@retailflow/shared-types";
 import { ProductStatus, GSTRate } from "@retailflow/shared-types";
 
@@ -15,9 +16,11 @@ export default function ProductsPage() {
   const addProduct = useProductStore((state) => state.addProduct);
   const updateProduct = useProductStore((state) => state.updateProduct);
   const removeProduct = useProductStore((state) => state.removeProduct);
+  const suppliers = useSupplierStore((state) => state.suppliers);
 
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedSupplier, setSelectedSupplier] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [page, setPage] = useState(1);
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -137,13 +140,15 @@ export default function ProductsPage() {
         (p.barcode && p.barcode.includes(search));
       const matchesCategory =
         selectedCategory === "All" || p.categoryName === selectedCategory;
+      const matchesSupplier =
+        selectedSupplier === "All" || p.supplierId === selectedSupplier;
       const matchesStatus =
         selectedStatus === "All" ||
         (selectedStatus === "active" && p.stockQuantity > 0) ||
         (selectedStatus === "out" && p.stockQuantity === 0);
-      return matchesSearch && matchesCategory && matchesStatus;
+      return matchesSearch && matchesCategory && matchesSupplier && matchesStatus;
     });
-  }, [products, search, selectedCategory, selectedStatus]);
+  }, [products, search, selectedCategory, selectedSupplier, selectedStatus]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -161,8 +166,12 @@ export default function ProductsPage() {
     e.preventDefault();
     if (!editingProduct) return;
 
+    const matchedSupplier = suppliers.find((s) => s.id === editForm.supplierId);
+
     updateProduct(editingProduct.id, {
       ...editForm,
+      supplierId: editForm.supplierId || undefined,
+      supplierName: matchedSupplier ? matchedSupplier.name : (editForm.supplierId ? editForm.supplierName : undefined),
       sellingPrice: Number(editForm.sellingPrice) || 0,
       purchasePrice: Number(editForm.purchasePrice) || 0,
       stockQuantity: Number(editForm.stockQuantity) || 0,
@@ -250,6 +259,21 @@ export default function ProductsPage() {
           ))}
         </select>
         <select
+          value={selectedSupplier}
+          onChange={(e) => {
+            setSelectedSupplier(e.target.value);
+            setPage(1);
+          }}
+          className="h-10 px-3 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="All">All Suppliers / Vendors</option>
+          {suppliers.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+        <select
           value={selectedStatus}
           onChange={(e) => {
             setSelectedStatus(e.target.value);
@@ -269,14 +293,15 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50/80 text-left text-xs uppercase tracking-wider text-gray-500 border-b">
-                <th className="px-6 py-3.5 font-semibold">Product</th>
-                <th className="px-6 py-3.5 font-semibold">SKU / Barcode</th>
-                <th className="px-6 py-3.5 font-semibold">Category</th>
-                <th className="px-6 py-3.5 text-right font-semibold">Cost (₹)</th>
-                <th className="px-6 py-3.5 text-right font-semibold">Price (₹)</th>
-                <th className="px-6 py-3.5 text-center font-semibold">GST</th>
-                <th className="px-6 py-3.5 text-center font-semibold">Stock</th>
-                <th className="px-6 py-3.5 text-right font-semibold">Actions</th>
+                <th className="px-5 py-3.5 font-bold">Product</th>
+                <th className="px-4 py-3.5 font-bold">HSN / SKU</th>
+                <th className="px-4 py-3.5 font-bold">Category</th>
+                <th className="px-4 py-3.5 font-bold">Supplier</th>
+                <th className="px-4 py-3.5 text-right font-bold">MRP (₹)</th>
+                <th className="px-4 py-3.5 text-right font-bold">Price (₹)</th>
+                <th className="px-4 py-3.5 text-center font-bold">GST</th>
+                <th className="px-4 py-3.5 text-center font-bold">Stock</th>
+                <th className="px-4 py-3.5 text-right font-bold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -286,42 +311,55 @@ export default function ProductsPage() {
 
                 return (
                   <tr key={product.id} className="hover:bg-gray-50/70 transition-colors">
-                    <td className="px-6 py-3.5">
+                    <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                        <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 font-bold">
                           <Package className="h-4 w-4" />
                         </div>
                         <div>
-                          <span className="font-semibold text-gray-900 block">{product.name}</span>
-                          <span className="text-xs text-gray-400">{product.unit || "pcs"}</span>
+                          <span className="font-bold text-gray-900 block text-xs">{product.name}</span>
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            {product.unit || "pcs"} {product.rackLocation ? `• ${product.rackLocation}` : ""}
+                          </span>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-3.5">
-                      <p className="font-mono text-xs text-gray-700 font-semibold">{product.sku}</p>
-                      {product.barcode && (
-                        <p className="font-mono text-[11px] text-gray-400">{product.barcode}</p>
+                    <td className="px-4 py-3.5">
+                      {product.hsnCode && (
+                        <span className="inline-block font-mono text-[10px] bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded mr-1">
+                          HSN: {product.hsnCode}
+                        </span>
                       )}
+                      <p className="font-mono text-xs text-gray-700 font-semibold">{product.sku}</p>
                     </td>
-                    <td className="px-6 py-3.5 text-gray-600">
-                      <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-xs font-medium">
+                    <td className="px-4 py-3.5 text-gray-600">
+                      <span className="inline-block px-2 py-0.5 rounded-lg bg-blue-50 text-blue-800 text-[11px] font-bold">
                         {product.categoryName}
                       </span>
                     </td>
-                    <td className="px-6 py-3.5 text-right text-gray-500">
-                      ₹{product.purchasePrice?.toFixed(2)}
+                    <td className="px-4 py-3.5">
+                      {product.supplierName ? (
+                        <span className="inline-block px-2 py-0.5 rounded-lg bg-purple-50 text-purple-800 text-[11px] font-bold border border-purple-100">
+                          {product.supplierName}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs italic">Direct / Self</span>
+                      )}
                     </td>
-                    <td className="px-6 py-3.5 text-right font-bold text-gray-900">
+                    <td className="px-4 py-3.5 text-right text-gray-500 font-mono text-xs">
+                      {product.mrp ? `₹${product.mrp.toFixed(2)}` : "-"}
+                    </td>
+                    <td className="px-4 py-3.5 text-right font-black text-gray-900 text-xs">
                       ₹{product.sellingPrice.toFixed(2)}
                     </td>
-                    <td className="px-6 py-3.5 text-center text-xs font-medium text-gray-600">
+                    <td className="px-4 py-3.5 text-center text-xs font-bold text-gray-600">
                       {product.gstRate}%
                     </td>
-                    <td className="px-6 py-3.5 text-center">
+                    <td className="px-4 py-3.5 text-center">
                       <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold ${
                           isOut
-                            ? "bg-red-50 text-red-700 border border-red-200"
+                            ? "bg-rose-50 text-rose-700 border border-rose-200"
                             : isLow
                             ? "bg-amber-50 text-amber-700 border border-amber-200"
                             : "bg-emerald-50 text-emerald-700 border border-emerald-200"
@@ -447,6 +485,30 @@ export default function ProductsPage() {
                     onChange={(e) => setEditForm({ ...editForm, categoryName: e.target.value })}
                     className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Primary Supplier / Vendor</label>
+                  <select
+                    value={editForm.supplierId || ""}
+                    onChange={(e) => {
+                      const sId = e.target.value;
+                      const sObj = suppliers.find((s) => s.id === sId);
+                      setEditForm({
+                        ...editForm,
+                        supplierId: sId || undefined,
+                        supplierName: sObj?.name || undefined,
+                      });
+                    }}
+                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="">-- No Supplier (Direct) --</option>
+                    {suppliers.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>

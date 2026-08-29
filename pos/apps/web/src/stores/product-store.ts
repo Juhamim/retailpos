@@ -40,6 +40,7 @@ interface ProductState {
   setSelectedCategory: (categoryId: string | null) => void;
   setSelectedStatus: (status: ProductStatus | null) => void;
   getFilteredProducts: () => ProductWithCategory[];
+  getProductsBySupplier: (supplierId: string) => ProductWithCategory[];
 }
 
 const INITIAL_CATEGORIES: Category[] = [];
@@ -159,6 +160,10 @@ export const useProductStore = create<ProductState>()(
           const matchesStatus = !selectedStatus || p.status === selectedStatus;
           return matchesSearch && matchesCategory && matchesStatus;
         });
+      },
+
+      getProductsBySupplier: (supplierId: string) => {
+        return get().products.filter((p) => p.supplierId === supplierId);
       },
     }),
     {

@@ -22,6 +22,10 @@ export interface SaleItem {
   productId: string;
   productName: string;
   productSku: string;
+  hsnCode?: string;
+  mrp?: number;
+  batchNumber?: string;
+  expiryDate?: string;
   quantity: number;
   unitPrice: number;
   discountPercent: number;
@@ -50,6 +54,10 @@ export interface CartItem {
   productName: string;
   productSku: string;
   barcode?: string;
+  hsnCode?: string;
+  mrp?: number;
+  batchNumber?: string;
+  expiryDate?: string;
   quantity: number;
   unitPrice: number;
   purchasePrice: number;

@@ -6,6 +6,12 @@ export interface Customer {
   address?: string;
   gstNumber?: string;
   notes?: string;
+  tier?: "regular" | "silver" | "gold" | "platinum" | "vip" | "wholesale";
+  customDiscountPercent?: number;
+  creditLimit?: number;
+  dateOfBirth?: string;
+  anniversaryDate?: string;
+  taxExempt?: boolean;
   loyaltyPoints: number;
   creditBalance: number;
   totalSpent: number;

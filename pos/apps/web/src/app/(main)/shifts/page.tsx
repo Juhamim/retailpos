@@ -1,12 +1,26 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useShiftStore } from "@/stores/shift-store";
+import { useShiftStore, Shift } from "@/stores/shift-store";
 import { useAppStore } from "@/stores/app-store";
 import { useSalesStore } from "@/stores/sales-store";
 import { exportZReportPDF } from "@/lib/pdf-export";
+import { createDayEndBackup } from "@/lib/dayend-backup";
 import { PaymentMethod } from "@retailflow/shared-types";
-import { Key, ShieldAlert, Check, Play, Info, AlertTriangle, FileText, CheckCircle2, History } from "lucide-react";
+import { 
+  Key, 
+  ShieldAlert, 
+  Check, 
+  Play, 
+  Info, 
+  AlertTriangle, 
+  FileText, 
+  CheckCircle2, 
+  History, 
+  Download, 
+  HardDriveDownload,
+  CheckCircle
+} from "lucide-react";
 
 export default function ShiftsPage() {
   const currentUser = useAppStore((state) => state.currentUser);
@@ -16,6 +30,8 @@ export default function ShiftsPage() {
   const [openingFloat, setOpeningFloat] = useState("500");
   const [closingFloat, setClosingFloat] = useState("0");
   const [notes, setNotes] = useState("");
+  const [backupStatus, setBackupStatus] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
 
   const handleOpenRegister = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,12 +40,49 @@ export default function ShiftsPage() {
     openShift(currentUser.id, `${currentUser.firstName} ${currentUser.lastName}`, float);
   };
 
-  const handleCloseRegister = (e: React.FormEvent) => {
+  const handleCloseRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!activeShift) return;
+    setIsClosing(true);
+
     const float = parseFloat(closingFloat) || 0;
+    const shiftSnapshot = { ...activeShift };
+    
+    // 1. Close register shift in store
     closeShift(float, notes);
+
+    // 2. Perform automated Day-End Data Backup to local file
+    try {
+      const backupRes = await createDayEndBackup({
+        shiftId: shiftSnapshot.id,
+        cashierName: shiftSnapshot.username,
+        backupType: "day_end_shift_closure",
+      });
+
+      if (backupRes.success) {
+        setBackupStatus(`Day-end closed! Data backed up to ${backupRes.filename}`);
+      } else {
+        setBackupStatus(`Day-end closed. Backup notice: ${backupRes.error}`);
+      }
+    } catch (err) {
+      console.warn("Backup triggering notice:", err);
+    }
+
     setClosingFloat("0");
     setNotes("");
+    setIsClosing(false);
+    setTimeout(() => setBackupStatus(null), 6000);
+  };
+
+  const handleManualDayEndBackup = async () => {
+    const res = await createDayEndBackup({
+      backupType: "manual_export",
+      cashierName: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "Admin",
+    });
+    if (res.success) {
+      setBackupStatus(`Manual Day-End snapshot downloaded: ${res.filename}`);
+      setTimeout(() => setBackupStatus(null), 4000);
+    }
   };
 
   // Calculate live shift statistics by filtering completed sales that happened after shift opened
@@ -71,14 +124,31 @@ export default function ShiftsPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Key className="h-7 w-7 text-indigo-600" /> Register Shifts & Reconciliation
-        </h1>
-        <p className="text-sm text-gray-500 mt-0.5 font-medium">
-          Open register drawer, perform mid-day drawer audits, and reconcile cash on day-end Z-Report closures
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Key className="h-7 w-7 text-indigo-600" /> Register Shifts & Reconciliation
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5 font-medium">
+            Open register drawer, perform mid-day drawer audits, and reconcile cash on day-end Z-Report closures
+          </p>
+        </div>
+        <button
+          onClick={handleManualDayEndBackup}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all shadow-sm"
+          title="Export instant Day-End JSON backup file to disk"
+        >
+          <HardDriveDownload className="h-4 w-4 text-indigo-400" />
+          Export Day-End Backup JSON
+        </button>
       </div>
+
+      {backupStatus && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>{backupStatus}</span>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Active Register Shift Status */}
@@ -208,9 +278,11 @@ export default function ShiftsPage() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="flex-1 h-11 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                    disabled={isClosing}
+                    className="flex-1 h-11 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
                   >
-                    <AlertTriangle className="h-4 w-4" /> Close Register & Generate Z-Report
+                    <AlertTriangle className="h-4 w-4" />
+                    {isClosing ? "Closing & Backing up..." : "Close Register, Generate Z-Report & Backup Day-End Data"}
                   </button>
                 </div>
               </form>

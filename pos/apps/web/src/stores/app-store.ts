@@ -16,6 +16,7 @@ interface AppState {
   currentUser: User | null;
   isLocked: boolean;
   commandPaletteOpen: boolean;
+  hasHydrated: boolean;
 
   setTheme: (theme: Theme) => void;
   toggleSidebar: () => void;
@@ -27,6 +28,7 @@ interface AppState {
   setCurrentUser: (user: User | null) => void;
   setIsLocked: (locked: boolean) => void;
   setCommandPaletteOpen: (open: boolean) => void;
+  setHasHydrated: (hydrated: boolean) => void;
   logout: () => void;
 }
 
@@ -42,6 +44,7 @@ export const useAppStore = create<AppState>()(
       currentUser: null,
       isLocked: false,
       commandPaletteOpen: false,
+      hasHydrated: false,
 
       setTheme: (theme) => set({ theme }),
       toggleSidebar: () =>
@@ -54,6 +57,7 @@ export const useAppStore = create<AppState>()(
       setCurrentUser: (user) => set({ currentUser: user }),
       setIsLocked: (isLocked) => set({ isLocked }),
       setCommandPaletteOpen: (commandPaletteOpen) => set({ commandPaletteOpen }),
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
       logout: () => set({ currentUser: null, isLocked: false, commandPaletteOpen: false }),
     }),
     {
@@ -65,6 +69,12 @@ export const useAppStore = create<AppState>()(
         currentUser: state.currentUser,
         isLocked: state.isLocked,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.setHasHydrated(true);
+        }
+      },
     }
   )
 );
+

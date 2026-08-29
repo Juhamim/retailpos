@@ -3,8 +3,12 @@ import { GSTRate, ProductStatus } from "./enums";
 export interface Category {
   id: string;
   name: string;
+  code?: string;
   description?: string;
   parentId?: string;
+  defaultGstRate?: GSTRate;
+  defaultHsnCode?: string;
+  color?: string;
   sortOrder: number;
   isActive: boolean;
   createdAt: string;
@@ -25,8 +29,12 @@ export interface Product {
   name: string;
   sku: string;
   barcode?: string;
+  hsnCode?: string;
+  mrp?: number;
   categoryId: string;
   brandId?: string;
+  supplierId?: string;
+  supplierName?: string;
   description?: string;
   imageUrl?: string;
   purchasePrice: number;
@@ -36,6 +44,12 @@ export interface Product {
   stockQuantity: number;
   reorderLevel: number;
   unit: string;
+  secondaryUnit?: string;
+  conversionRatio?: number;
+  batchNumber?: string;
+  expiryDate?: string;
+  rackLocation?: string;
+  isTaxInclusive?: boolean;
   status: ProductStatus;
   isWeighable: boolean;
   createdAt: string;
@@ -48,6 +62,8 @@ export interface ProductVariant {
   name: string;
   sku: string;
   barcode?: string;
+  hsnCode?: string;
+  mrp?: number;
   purchasePrice: number;
   sellingPrice: number;
   stockQuantity: number;
@@ -59,4 +75,5 @@ export interface ProductVariant {
 export interface ProductWithCategory extends Product {
   categoryName: string;
   brandName?: string;
+  supplierName?: string;
 }

@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PaymentMethod } from "@retailflow/shared-types";
-import { X, Banknote, CreditCard, Smartphone, Split, CheckCircle2, ArrowRight, BookOpen, Gift, Percent } from "lucide-react";
+import { X, Banknote, CreditCard, Smartphone, Split, CheckCircle2, ArrowRight, BookOpen, Gift, Percent, QrCode } from "lucide-react";
 import { usePOSStore } from "@/stores/pos-store";
 import { useCustomerStore } from "@/stores/customer-store";
 import { useGiftCardStore } from "@/stores/giftcard-store";
+import { useSettingsStore } from "@/stores/settings-store";
+import { generateUpiQrDataUrl } from "@/lib/upi-qr";
 
 interface PaymentModalProps {
   total: number;
@@ -16,12 +18,14 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
   const customers = useCustomerStore((s) => s.customers);
   const attachedCustomer = customers.find(c => c.id === customerId);
   const deductLoyaltyPoints = useCustomerStore((s) => s.deductLoyaltyPoints);
+  const shopSettings = useSettingsStore((s) => s.settings.shop);
 
   const { giftCards, deductGiftCard } = useGiftCardStore();
 
   const [mode, setMode] = useState<"single" | "split">("single");
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [reference, setReference] = useState("");
+  const [upiQrUrl, setUpiQrUrl] = useState<string>("");
 
   // Gift Card payment states
   const [giftCardCode, setGiftCardCode] = useState("");
@@ -126,6 +130,20 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
     if (type === "card") setSplitCard(remainder.toFixed(2));
   };
 
+  useEffect(() => {
+    if (selectedMethod === PaymentMethod.UPI && netDue > 0) {
+      const upiId = shopSettings.upiId || "contact@retailflowmart.in";
+      const payeeName = shopSettings.shopName || "RetailFlow POS";
+      const invoiceNumber = `BILL-${Date.now().toString().slice(-6)}`;
+      generateUpiQrDataUrl({
+        upiId,
+        payeeName,
+        amount: netDue,
+        invoiceNumber,
+      }).then(setUpiQrUrl);
+    }
+  }, [selectedMethod, netDue, shopSettings]);
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 flex flex-col max-h-[92vh]">
@@ -178,6 +196,31 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {mode === "single" ? (
             <>
+              {/* Attached Customer Profile & Tier Header */}
+              {attachedCustomer && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                  <div>
+                    <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                      <span>{attachedCustomer.name}</span>
+                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                        {attachedCustomer.tier || "Regular"}
+                      </span>
+                      {(attachedCustomer.customDiscountPercent || 0) > 0 && (
+                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                          {attachedCustomer.customDiscountPercent}% Tier Discount
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      Khata Limit: ₹{(attachedCustomer.creditLimit ?? 5000).toLocaleString()} • Current Debt: ₹{(attachedCustomer.creditBalance || 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">
+                    ★ {attachedCustomer.loyaltyPoints} pts
+                  </span>
+                </div>
+              )}
+
               {/* Customer Loyalty Redemption Panel */}
               {attachedCustomer && attachedCustomer.loyaltyPoints > 0 && (
                 <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl space-y-2">
@@ -236,6 +279,41 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
                   </button>
                 ))}
               </div>
+
+              {/* UPI Dynamic QR Code Display */}
+              {selectedMethod === PaymentMethod.UPI && (
+                <div className="space-y-3 bg-blue-50/60 p-4 rounded-2xl border border-blue-200 text-center animate-in fade-in">
+                  <div className="flex items-center justify-center gap-1.5 text-blue-900 font-bold text-xs">
+                    <Smartphone className="h-4 w-4 text-blue-600" />
+                    <span>Scan with any UPI App to Pay ₹{netDue.toFixed(2)}</span>
+                  </div>
+
+                  {upiQrUrl ? (
+                    <div className="inline-block p-2 bg-white rounded-2xl border border-blue-200 shadow-sm mx-auto">
+                      <img src={upiQrUrl} alt="Dynamic UPI QR" className="w-44 h-44 object-contain mx-auto" />
+                    </div>
+                  ) : (
+                    <div className="h-44 w-44 bg-white rounded-2xl border border-dashed border-blue-200 flex items-center justify-center mx-auto text-xs text-blue-400">
+                      Generating QR...
+                    </div>
+                  )}
+
+                  <div className="text-[11px] text-slate-600 font-medium">
+                    <p className="font-bold text-slate-800">UPI ID: <span className="font-mono text-blue-700">{shopSettings.upiId || "contact@retailflowmart.in"}</span></p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Google Pay • PhonePe • Paytm • BHIM • Cred</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-blue-200/60">
+                    <input
+                      type="text"
+                      value={reference}
+                      onChange={(e) => setReference(e.target.value)}
+                      placeholder="Enter UTR / Ref Number (Optional)"
+                      className="w-full h-9 px-3 border border-blue-200 rounded-xl text-xs bg-white focus:outline-none font-mono"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Cash Input */}
               {selectedMethod === PaymentMethod.CASH && (
@@ -341,16 +419,16 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
                 </div>
               )}
 
-              {selectedMethod !== PaymentMethod.CASH && selectedMethod !== PaymentMethod.CREDIT && selectedMethod !== PaymentMethod.GIFT_CARD && (
+              {selectedMethod === PaymentMethod.CARD && (
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-gray-700 block">
-                    Transaction ID / Reference (Optional)
+                    Card Approval / Auth Code (Optional)
                   </label>
                   <input
                     type="text"
                     value={reference}
                     onChange={(e) => setReference(e.target.value)}
-                    placeholder="e.g. UPI Ref #4029108"
+                    placeholder="e.g. Card Txn #9284"
                     className="w-full h-10 px-3.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>

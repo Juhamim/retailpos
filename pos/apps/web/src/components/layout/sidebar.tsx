@@ -19,7 +19,8 @@ import {
   Barcode,
   Users2,
   FileText,
-  CreditCard
+  CreditCard,
+  Wallet
 } from "lucide-react";
 import { useAppStore } from "@/stores/app-store";
 import { UserRole } from "@retailflow/shared-types";
@@ -45,6 +46,7 @@ export default function Sidebar() {
     { href: "/purchases", label: "Supplier Bills", icon: FileText, roles: [UserRole.OWNER, UserRole.MANAGER] },
     { href: "/giftcards", label: "Store Gift Cards", icon: CreditCard, roles: [UserRole.OWNER, UserRole.MANAGER] },
     { href: "/expenses", label: "Expenses", icon: Receipt, roles: [UserRole.OWNER, UserRole.MANAGER] },
+    { href: "/accounts", label: "Accounts & Cash", icon: Wallet, roles: [UserRole.OWNER, UserRole.MANAGER] },
     { href: "/reports", label: "Reports & GST", icon: BarChart3, roles: [UserRole.OWNER, UserRole.MANAGER] },
     { href: "/users", label: "Manage Users", icon: Users2, roles: [UserRole.OWNER] },
     { href: "/settings", label: "Settings", icon: Settings, roles: [UserRole.OWNER] },

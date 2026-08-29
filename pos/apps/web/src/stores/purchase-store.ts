@@ -46,8 +46,8 @@ export const usePurchaseStore = create<PurchaseState>()(
           createdAt: new Date().toISOString(),
         };
 
-        // Automatically restock products in the inventory catalog
-        const { adjustStock } = useProductStore.getState();
+        // Automatically restock products in the inventory catalog and sync latest supplier cost
+        const { adjustStock, updateProduct, products } = useProductStore.getState();
         for (const item of recordData.items) {
           adjustStock(
             item.productId,
@@ -55,6 +55,16 @@ export const usePurchaseStore = create<PurchaseState>()(
             "restock",
             `Supplier Purchase Restock (Bill: ${recordData.invoiceNumber})`
           );
+
+          // Sync supplier info and cost price to product
+          const targetProduct = products.find((p) => p.id === item.productId);
+          if (targetProduct) {
+            updateProduct(item.productId, {
+              supplierId: targetProduct.supplierId || recordData.supplierId,
+              supplierName: targetProduct.supplierName || recordData.supplierName,
+              purchasePrice: item.purchasePrice,
+            });
+          }
         }
 
         set((state) => ({

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAppStore } from "@/stores/app-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { Lock, LogOut } from "lucide-react";
 
 export function PinLockScreen() {
+  const router = useRouter();
   const isLocked = useAppStore((state) => state.isLocked);
   const setIsLocked = useAppStore((state) => state.setIsLocked);
   const currentUser = useAppStore((state) => state.currentUser);
@@ -72,7 +74,7 @@ export function PinLockScreen() {
   const handleLogout = () => {
     setCurrentUser(null);
     setIsLocked(false);
-    window.location.href = "/login";
+    router.replace("/login");
   };
 
   return (

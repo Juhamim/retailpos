@@ -1,14 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Lock, User, Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Lock, User, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAppStore } from "@/stores/app-store";
+import { useStoreHydration } from "@/hooks/use-hydration";
 
 export default function LoginPage() {
+  const router = useRouter();
   const { verifyPin, verifyPassword } = useAuthStore();
+  const currentUser = useAppStore((state) => state.currentUser);
   const setCurrentUser = useAppStore((state) => state.setCurrentUser);
   const setIsLocked = useAppStore((state) => state.setIsLocked);
+  const hasHydrated = useStoreHydration(useAppStore);
 
   const [mode, setMode] = useState<"credentials" | "pin">("pin");
   const [username, setUsername] = useState("");
@@ -16,21 +21,35 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // If already authenticated and store is hydrated, redirect to dashboard
+  useEffect(() => {
+    if (hasHydrated && currentUser) {
+      router.replace("/dashboard");
+    }
+  }, [hasHydrated, currentUser, router]);
 
   const handlePasswordLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
+    setError("");
+    const cleanUser = username.trim();
+    const cleanPass = password.trim();
+
+    if (!cleanUser || !cleanPass) {
       setError("Please enter both username and password");
       return;
     }
 
-    const authenticatedUser = verifyPassword(username, password);
+    setLoading(true);
+    const authenticatedUser = verifyPassword(cleanUser, cleanPass);
     if (authenticatedUser) {
       setCurrentUser(authenticatedUser);
       setIsLocked(false);
-      window.location.href = "/dashboard";
+      router.replace("/dashboard");
     } else {
-      setError("Invalid username or password");
+      setLoading(false);
+      setError("Invalid username or password (Default: admin / 1234)");
     }
   };
 
@@ -40,16 +59,36 @@ export default function LoginPage() {
       const newPin = pin + val;
       setPin(newPin);
       if (newPin.length === 4) {
+        setLoading(true);
         const authenticatedUser = verifyPin(newPin);
         if (authenticatedUser) {
           setCurrentUser(authenticatedUser);
           setIsLocked(false);
-          window.location.href = "/dashboard";
+          router.replace("/dashboard");
         } else {
-          setError("Incorrect PIN");
-          setPin(""); // reset
+          setLoading(false);
+          setError("Incorrect PIN. Admin: 1234 | Cashier: 5678 | Manager: 9999");
+          setPin("");
         }
       }
+    }
+  };
+
+  const handlePinSubmit = () => {
+    if (pin.length === 4) {
+      setLoading(true);
+      const authenticatedUser = verifyPin(pin);
+      if (authenticatedUser) {
+        setCurrentUser(authenticatedUser);
+        setIsLocked(false);
+        router.replace("/dashboard");
+      } else {
+        setLoading(false);
+        setError("Incorrect PIN. Admin: 1234 | Cashier: 5678 | Manager: 9999");
+        setPin("");
+      }
+    } else {
+      setError("Please enter a 4-digit PIN");
     }
   };
 
@@ -69,6 +108,8 @@ export default function LoginPage() {
         handleBackspace();
       } else if (e.key === "Escape") {
         setPin("");
+      } else if (e.key === "Enter" && pin.length === 4) {
+        handlePinSubmit();
       }
     };
 
@@ -130,7 +171,7 @@ export default function LoginPage() {
                     type="text"
                     value={username}
                     onChange={(e) => { setUsername(e.target.value); setError(""); }}
-                    placeholder="Enter username"
+                    placeholder="e.g. admin"
                     className="w-full h-11 pl-11 pr-4 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     autoFocus
                   />
@@ -145,7 +186,7 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                    placeholder="Enter password"
+                    placeholder="Enter password (default: 1234)"
                     className="w-full h-11 pl-11 pr-11 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                   <button
@@ -160,9 +201,10 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="w-full h-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-90 active:scale-[0.98] text-white rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-indigo-500/25 tracking-wide mt-2"
+                disabled={loading}
+                className="w-full h-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-90 active:scale-[0.98] text-white rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-indigo-500/25 tracking-wide mt-2 flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                Sign In to Dashboard
+                {loading ? "Signing in..." : "Sign In to Dashboard"}
               </button>
             </form>
           ) : (
@@ -184,6 +226,7 @@ export default function LoginPage() {
                 {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((val) => (
                   <button
                     key={val}
+                    type="button"
                     onClick={() => handlePinKey(val)}
                     className="w-16 h-16 rounded-full bg-slate-900 hover:bg-slate-800 text-lg font-bold flex items-center justify-center border border-slate-800/80 active:scale-95 transition-all text-slate-100 hover:text-white"
                   >
@@ -191,18 +234,21 @@ export default function LoginPage() {
                   </button>
                 ))}
                 <button
+                  type="button"
                   onClick={() => setPin("")}
                   className="w-16 h-16 rounded-full text-xs font-bold text-slate-500 hover:text-slate-300 flex items-center justify-center transition-colors"
                 >
                   Clear
                 </button>
                 <button
+                  type="button"
                   onClick={() => handlePinKey("0")}
                   className="w-16 h-16 rounded-full bg-slate-900 hover:bg-slate-800 text-lg font-bold flex items-center justify-center border border-slate-800/80 active:scale-95 transition-all text-slate-100 hover:text-white"
                 >
                   0
                 </button>
                 <button
+                  type="button"
                   onClick={handleBackspace}
                   className="w-16 h-16 rounded-full text-xs font-bold text-slate-500 hover:text-slate-300 flex items-center justify-center transition-colors"
                 >
@@ -211,32 +257,20 @@ export default function LoginPage() {
               </div>
 
               <button
-                onClick={() => {
-                  if (pin.length === 4) {
-                    const authenticatedUser = verifyPin(pin);
-                    if (authenticatedUser) {
-                      setCurrentUser(authenticatedUser);
-                      setIsLocked(false);
-                      window.location.href = "/dashboard";
-                    } else {
-                      setError("Incorrect PIN");
-                      setPin("");
-                    }
-                  } else {
-                    setError("Please enter a 4-digit PIN");
-                  }
-                }}
-                className="w-full h-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-90 active:scale-[0.98] text-white rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-indigo-500/25 tracking-wide"
+                type="button"
+                onClick={handlePinSubmit}
+                disabled={loading}
+                className="w-full h-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-90 active:scale-[0.98] text-white rounded-xl text-sm font-extrabold transition-all shadow-lg shadow-indigo-500/25 tracking-wide flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                Verify PIN & Sign In
+                {loading ? "Verifying..." : "Verify PIN & Sign In"}
               </button>
             </div>
           )}
 
           {/* Quick Info */}
           <div className="mt-6 border-t border-slate-700/30 pt-4 text-center">
-            <p className="text-[10px] text-slate-500 tracking-wide uppercase">
-              Pre-seeded Accounts: Admin PIN: 1234 | Cashier PIN: 5678 | Manager PIN: 9999
+            <p className="text-[10px] text-slate-400 tracking-wide uppercase font-medium">
+              Pre-seeded Accounts: Admin PIN: <strong className="text-indigo-400">1234</strong> | Cashier PIN: <strong className="text-indigo-400">5678</strong> | Manager PIN: <strong className="text-indigo-400">9999</strong>
             </p>
           </div>
         </div>
@@ -248,3 +282,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

@@ -18,7 +18,13 @@ import {
 import Link from "next/link";
 import { useSalesStore, CompletedSale } from "@/stores/sales-store";
 import { useProductStore } from "@/stores/product-store";
+import { useAccountStore } from "@/stores/account-store";
+import { useExpenseStore } from "@/stores/expense-store";
+import { useCustomerStore } from "@/stores/customer-store";
+import { useSupplierStore } from "@/stores/supplier-store";
+import { usePurchaseStore } from "@/stores/purchase-store";
 import { ReceiptDialog } from "@/components/pos/receipt-dialog";
+import { PaymentMethod } from "@retailflow/shared-types";
 
 type DateRange = "Today" | "7 Days" | "30 Days" | "All Time";
 
@@ -93,6 +99,77 @@ export default function DashboardPage() {
     return sales.slice(0, 5);
   }, [sales]);
 
+  // Live Treasury Balances
+  const initialCash = useAccountStore((s) => s.initialCashBalance);
+  const initialBank = useAccountStore((s) => s.initialBankBalance);
+  const adjustments = useAccountStore((s) => s.adjustments);
+  const expenses = useExpenseStore((s) => s.expenses);
+  const customers = useCustomerStore((s) => s.customers);
+  const creditLedger = useCustomerStore((s) => s.creditLedger);
+  const suppliers = useSupplierStore((s) => s.suppliers);
+
+  const liveCashBalance = useMemo(() => {
+    let cash = initialCash;
+    for (const s of sales) {
+      if (s.status === "completed") {
+        for (const p of s.payments) {
+          if (p.method === PaymentMethod.CASH) cash += p.amount;
+        }
+      }
+    }
+    for (const l of creditLedger) {
+      if (l.type === "payment" && (l.method === "cash" || !l.method)) cash += l.amount;
+    }
+    for (const a of adjustments) {
+      if (a.account === "cash") {
+        cash += a.type === "in" ? a.amount : -a.amount;
+      }
+    }
+    for (const e of expenses) {
+      if (!e.paymentMethod || e.paymentMethod === PaymentMethod.CASH || String(e.paymentMethod).toLowerCase() === "cash") {
+        cash -= e.amount;
+      }
+    }
+    return Math.round(cash * 100) / 100;
+  }, [initialCash, sales, creditLedger, adjustments, expenses]);
+
+  const liveBankBalance = useMemo(() => {
+    let bank = initialBank;
+    for (const s of sales) {
+      if (s.status === "completed") {
+        for (const p of s.payments) {
+          if (p.method === PaymentMethod.UPI || p.method === PaymentMethod.CARD) bank += p.amount;
+        }
+      }
+    }
+    for (const l of creditLedger) {
+      if (l.type === "payment" && (l.method === "upi" || l.method === "card" || l.method === "bank")) bank += l.amount;
+    }
+    for (const a of adjustments) {
+      if (a.account === "bank") {
+        bank += a.type === "in" ? a.amount : -a.amount;
+      }
+    }
+    for (const e of expenses) {
+      if (e.paymentMethod && e.paymentMethod !== PaymentMethod.CASH && String(e.paymentMethod).toLowerCase() !== "cash") {
+        bank -= e.amount;
+      }
+    }
+    return Math.round(bank * 100) / 100;
+  }, [initialBank, sales, creditLedger, adjustments, expenses]);
+
+  const totalReceivables = useMemo(() => {
+    return Math.round(customers.reduce((sum, c) => sum + (c.creditBalance || 0), 0) * 100) / 100;
+  }, [customers]);
+
+  const purchases = usePurchaseStore((s) => s.purchases);
+
+  const totalPayables = useMemo(() => {
+    return Math.round(
+      purchases.filter((p) => p.paymentStatus === "pending").reduce((sum, p) => sum + p.totalAmount, 0) * 100
+    ) / 100;
+  }, [purchases]);
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -100,7 +177,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">RetailFlow Store Dashboard</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Real-time sales velocity, inventory alerts, profit margins, and recent invoices
+            Real-time sales velocity, treasury cash in hand, profit margins, and inventory alerts
           </p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1 shadow-2xs">
@@ -117,6 +194,49 @@ export default function DashboardPage() {
               {filter}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Real-Time Treasury & Cash Balances Quick Widget */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-5 rounded-2xl text-white shadow-md border border-slate-700/60">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-700/80">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-400">
+              <Wallet className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-wider text-indigo-300">Live Accounts & Balances</p>
+              <p className="text-[11px] text-slate-400">Real-time funds breakdown in cash till, bank UPI, and Khata</p>
+            </div>
+          </div>
+          <Link
+            href="/accounts"
+            className="h-8 px-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+          >
+            Open Accounts Hub →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
+          <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+            <span className="text-[11px] text-emerald-300 font-semibold block">💵 Cash in Drawer</span>
+            <span className="text-lg font-black text-white">₹{liveCashBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+          </div>
+
+          <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+            <span className="text-[11px] text-indigo-300 font-semibold block">🏦 Bank & UPI / Card</span>
+            <span className="text-lg font-black text-white">₹{liveBankBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+          </div>
+
+          <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+            <span className="text-[11px] text-amber-300 font-semibold block">👥 Khata Receivables</span>
+            <span className="text-lg font-black text-amber-200">₹{totalReceivables.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+          </div>
+
+          <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+            <span className="text-[11px] text-rose-300 font-semibold block">🏢 Supplier Payables</span>
+            <span className="text-lg font-black text-rose-200">₹{totalPayables.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+          </div>
         </div>
       </div>
 

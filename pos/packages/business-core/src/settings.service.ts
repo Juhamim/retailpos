@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   tax: {
     defaultGstRate: GSTRate.EIGHTEEN,
     inclusiveTax: false,
+    enableHsnSummary: true,
   },
   pos: {
     invoiceFormat: InvoiceFormat.THERMAL_80MM,
