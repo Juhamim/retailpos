@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { tauriStorage } from "@/lib/tauri-storage";
 import type { User } from "@retailflow/shared-types";
 import { SyncStatus } from "@retailflow/shared-types";
 
@@ -13,6 +14,8 @@ interface AppState {
   pendingChanges: number;
   isOnline: boolean;
   currentUser: User | null;
+  isLocked: boolean;
+  commandPaletteOpen: boolean;
 
   setTheme: (theme: Theme) => void;
   toggleSidebar: () => void;
@@ -22,6 +25,8 @@ interface AppState {
   setPendingChanges: (count: number) => void;
   setIsOnline: (online: boolean) => void;
   setCurrentUser: (user: User | null) => void;
+  setIsLocked: (locked: boolean) => void;
+  setCommandPaletteOpen: (open: boolean) => void;
   logout: () => void;
 }
 
@@ -35,6 +40,8 @@ export const useAppStore = create<AppState>()(
       pendingChanges: 0,
       isOnline: true,
       currentUser: null,
+      isLocked: false,
+      commandPaletteOpen: false,
 
       setTheme: (theme) => set({ theme }),
       toggleSidebar: () =>
@@ -45,13 +52,18 @@ export const useAppStore = create<AppState>()(
       setPendingChanges: (count) => set({ pendingChanges: count }),
       setIsOnline: (isOnline) => set({ isOnline }),
       setCurrentUser: (user) => set({ currentUser: user }),
-      logout: () => set({ currentUser: null }),
+      setIsLocked: (isLocked) => set({ isLocked }),
+      setCommandPaletteOpen: (commandPaletteOpen) => set({ commandPaletteOpen }),
+      logout: () => set({ currentUser: null, isLocked: false, commandPaletteOpen: false }),
     }),
     {
       name: "rf-app-store",
+      storage: createJSONStorage(() => tauriStorage),
       partialize: (state) => ({
         theme: state.theme,
         sidebarCollapsed: state.sidebarCollapsed,
+        currentUser: state.currentUser,
+        isLocked: state.isLocked,
       }),
     }
   )

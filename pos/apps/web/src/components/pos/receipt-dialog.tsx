@@ -4,6 +4,11 @@ import React, { useState } from "react";
 import { CartItem } from "@retailflow/shared-types";
 import { X, Printer, CheckCircle2, Download, FileText, Smartphone } from "lucide-react";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useAppStore } from "@/stores/app-store";
+import { useCustomerStore } from "@/stores/customer-store";
+import { exportTaxInvoicePDF } from "@/lib/pdf-export";
+
+
 
 interface ReceiptDialogProps {
   invoiceNumber: string;
@@ -23,9 +28,55 @@ export function ReceiptDialog({
   onClose,
 }: ReceiptDialogProps) {
   const shop = useSettingsStore((state) => state.settings.shop);
+  const customers = useCustomerStore((state) => state.customers);
+  const currentUser = useAppStore((state) => state.currentUser);
+  
+  const customerObj = customers.find(c => c.name === customerName);
+  
   const [format, setFormat] = useState<"thermal" | "invoice">("thermal");
+  const [phone, setPhone] = useState(customerObj?.phone || "");
+  const [showPhonePrompt, setShowPhonePrompt] = useState(false);
 
   const now = new Date();
+  
+  const handleExportPDF = () => {
+    const saleData: any = {
+      id: `sale-${Date.now()}`,
+      invoiceNumber,
+      customerId: customerObj?.id,
+      customerName: customerName || "Walk-in Customer",
+      items,
+      subtotal,
+      taxAmount: totalTax,
+      discountAmount: totalDiscount,
+      totalAmount: total,
+      paymentMethod: paymentMethod as any,
+      payments: [{ method: paymentMethod as any, amount: total }],
+      status: "completed" as any,
+      cashierName: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "Cashier",
+      createdAt: now.toISOString()
+    };
+    exportTaxInvoicePDF(saleData, shop);
+  };
+
+  const triggerWhatsApp = () => {
+    if (!phone) {
+      setShowPhonePrompt(true);
+    } else {
+      sendWhatsApp(phone);
+    }
+  };
+
+  const sendWhatsApp = (targetPhone: string) => {
+    const cleanPhone = targetPhone.replace(/[^0-9]/g, "");
+    if (!cleanPhone) return;
+    const itemsText = items.map(item => `- ${item.productName} (x${item.quantity}): INR ${item.totalAmount.toFixed(2)}`).join("\n");
+    const msg = `*INVOICE FROM ${shop.shopName}*\n------------------------------\nInvoice No: ${invoiceNumber}\nTotal Amount: INR ${total.toFixed(2)}\nItems:\n${itemsText}\n------------------------------\nThank you for shopping!`;
+    const url = `https://wa.me/${cleanPhone.startsWith("91") ? cleanPhone : "91" + cleanPhone}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+    setShowPhonePrompt(false);
+  };
+
   const dateStr = now.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -222,10 +273,10 @@ export function ReceiptDialog({
         </div>
 
         {/* Action Buttons */}
-        <div className="p-4 border-t bg-white flex gap-2 shrink-0">
+        <div className="p-4 border-t bg-white flex gap-2 flex-wrap shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 h-11 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex-1 min-w-[120px] h-11 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Done / Next Sale
           </button>
@@ -237,14 +288,63 @@ export function ReceiptDialog({
             <Download className="h-4 w-4" /> TXT
           </button>
           <button
+            onClick={handleExportPDF}
+            className="h-11 px-3.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1.5"
+            title="Download A4 PDF invoice"
+          >
+            <FileText className="h-4 w-4" /> PDF
+          </button>
+          <button
+            onClick={triggerWhatsApp}
+            className="h-11 px-3.5 rounded-xl border-green-300 bg-green-50 text-green-700 text-xs font-semibold hover:bg-green-100 transition-colors flex items-center justify-center gap-1.5"
+            title="Send to WhatsApp"
+          >
+            <Smartphone className="h-4 w-4" /> WhatsApp
+          </button>
+          <button
             onClick={handlePrint}
-            className="flex-1 h-11 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+            className="flex-1 min-w-[120px] h-11 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
           >
             <Printer className="h-4 w-4" />
             Print Receipt
           </button>
         </div>
       </div>
+
+      {/* WhatsApp Phone Prompt Overlay */}
+      {showPhonePrompt && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-51 p-4">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full space-y-4">
+            <div>
+              <h3 className="font-bold text-gray-900 text-sm">Send Receipt via WhatsApp</h3>
+              <p className="text-xs text-gray-500 mt-1">Enter customer's 10-digit mobile number</p>
+            </div>
+            <input
+              type="text"
+              placeholder="e.g. 9876543210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full h-10 px-3.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowPhonePrompt(false)}
+                className="flex-1 h-10 border border-gray-300 text-xs font-semibold text-gray-700 rounded-xl hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => sendWhatsApp(phone)}
+                disabled={phone.replace(/[^0-9]/g, "").length < 10}
+                className="flex-1 h-10 bg-blue-600 disabled:opacity-50 text-white text-xs font-semibold rounded-xl hover:bg-blue-700"
+              >
+                Send Message
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

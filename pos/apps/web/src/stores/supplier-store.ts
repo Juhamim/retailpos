@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { tauriStorage } from "@/lib/tauri-storage";
 import type { Supplier } from "@retailflow/shared-types";
 
 interface SupplierState {
@@ -75,6 +76,7 @@ export const useSupplierStore = create<SupplierState>()(
     }),
     {
       name: "retailflow-suppliers-storage",
+      storage: createJSONStorage(() => tauriStorage),
     }
   )
 );

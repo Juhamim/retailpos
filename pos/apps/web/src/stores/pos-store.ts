@@ -1,7 +1,10 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { tauriStorage } from "@/lib/tauri-storage";
 import type { CartItem, ProductWithCategory } from "@retailflow/shared-types";
 import { PaymentMethod, SaleStatus } from "@retailflow/shared-types";
+import { usePromoStore } from "./promo-store";
+import { useProductStore } from "./product-store";
 
 export interface HeldSaleRecord {
   id: string;
@@ -39,16 +42,102 @@ export interface POSStoreState {
   };
 }
 
-function calculateItemTotals(item: CartItem): CartItem {
-  const itemTotal = item.unitPrice * item.quantity;
-  const lineDiscount = itemTotal * (item.discountPercent / 100);
-  const afterDiscount = itemTotal - lineDiscount;
-  const taxAmount = afterDiscount * (item.taxRate / 100);
+export interface RetailCartItem extends CartItem {
+  originalUnitPrice?: number;
+  originalDiscountPercent?: number;
+  isPromoFreeItem?: boolean;
+}
+
+function calculateItemTotals(item: RetailCartItem): RetailCartItem {
+  const itemTotalInclusive = item.unitPrice * item.quantity;
+  const lineDiscount = itemTotalInclusive * (item.discountPercent / 100);
+  const totalAmount = itemTotalInclusive - lineDiscount;
+  
+  const subtotal = totalAmount / (1 + item.taxRate / 100);
+  const taxAmount = totalAmount - subtotal;
+  
   return {
     ...item,
     taxAmount: Math.round(taxAmount * 100) / 100,
-    totalAmount: Math.round((afterDiscount + taxAmount) * 100) / 100,
+    totalAmount: Math.round(totalAmount * 100) / 100,
   };
+}
+
+function applyPromoRules(cart: RetailCartItem[]): RetailCartItem[] {
+  const rules = usePromoStore.getState().rules.filter((r) => r.status === "active");
+  const products = useProductStore.getState().products;
+
+  // Clone and restore original values, filter out old promo items
+  let updated: RetailCartItem[] = cart
+    .filter((item) => !item.isPromoFreeItem)
+    .map((item) => ({
+      ...item,
+      unitPrice: item.originalUnitPrice ?? item.unitPrice,
+      originalUnitPrice: item.originalUnitPrice ?? item.unitPrice,
+      discountPercent: item.originalDiscountPercent ?? item.discountPercent,
+      originalDiscountPercent: item.originalDiscountPercent ?? item.discountPercent,
+    }));
+
+  for (const rule of rules) {
+    if (rule.type === "volume_discount") {
+      const targetId = rule.conditions.buyProductId;
+      const minQty = rule.conditions.minQty || 1;
+      const volPrice = rule.actions.volumePrice || 0;
+
+      updated = updated.map((item) => {
+        if (item.productId === targetId && item.quantity >= minQty) {
+          return { ...item, unitPrice: volPrice };
+        }
+        return item;
+      });
+    }
+
+    if (rule.type === "category_discount") {
+      const catId = rule.conditions.categoryId;
+      const disc = rule.actions.discountPercent || 0;
+
+      updated = updated.map((item) => {
+        const prod = products.find((p) => p.id === item.productId);
+        if (prod && prod.categoryId === catId) {
+          return { ...item, discountPercent: Math.min(100, item.discountPercent + disc) };
+        }
+        return item;
+      });
+    }
+
+    if (rule.type === "bogo") {
+      const buyId = rule.conditions.buyProductId;
+      const buyQty = rule.conditions.buyQty || 1;
+      const freeId = rule.actions.freeProductId;
+      const freeQty = rule.actions.freeQty || 1;
+
+      const itemToBuy = updated.find((item) => item.productId === buyId);
+      if (itemToBuy && itemToBuy.quantity >= buyQty) {
+        const setsOfPromo = Math.floor(itemToBuy.quantity / buyQty);
+        const totalFreeQty = setsOfPromo * freeQty;
+
+        const freeProduct = products.find((p) => p.id === freeId);
+        if (freeProduct) {
+          updated.push({
+            productId: `${freeProduct.id}-free`,
+            productName: `${freeProduct.name} (BOGO Free)`,
+            productSku: freeProduct.sku,
+            barcode: freeProduct.barcode,
+            quantity: totalFreeQty,
+            unitPrice: 0,
+            purchasePrice: 0,
+            discountPercent: 0,
+            taxRate: parseFloat(freeProduct.gstRate) || 0,
+            taxAmount: 0,
+            totalAmount: 0,
+            isPromoFreeItem: true,
+          });
+        }
+      }
+    }
+  }
+
+  return updated.map((item) => calculateItemTotals(item));
 }
 
 export const usePOSStore = create<POSStoreState>()(
@@ -74,7 +163,7 @@ export const usePOSStore = create<POSStoreState>()(
               ? calculateItemTotals({ ...i, quantity: i.quantity + 1 })
               : i
           );
-          set({ cart: updated });
+          set({ cart: applyPromoRules(updated) });
         } else {
           const newItem: CartItem = calculateItemTotals({
             productId: product.id,
@@ -89,7 +178,7 @@ export const usePOSStore = create<POSStoreState>()(
             taxAmount: 0,
             totalAmount: 0,
           });
-          set({ cart: [...state.cart, newItem] });
+          set({ cart: applyPromoRules([...state.cart, newItem]) });
         }
       },
 
@@ -99,17 +188,19 @@ export const usePOSStore = create<POSStoreState>()(
           return;
         }
         set((state) => ({
-          cart: state.cart.map((item) =>
-            item.productId === productId
-              ? calculateItemTotals({ ...item, quantity })
-              : item
+          cart: applyPromoRules(
+            state.cart.map((item) =>
+              item.productId === productId
+                ? calculateItemTotals({ ...item, quantity })
+                : item
+            )
           ),
         }));
       },
 
       removeFromCart: (productId) => {
         set((state) => ({
-          cart: state.cart.filter((i) => i.productId !== productId),
+          cart: applyPromoRules(state.cart.filter((i) => i.productId !== productId)),
         }));
       },
 
@@ -173,26 +264,22 @@ export const usePOSStore = create<POSStoreState>()(
 
       getTotals: () => {
         const { cart, orderDiscount } = get();
-        const subtotal = cart.reduce((sum, item) => {
-          const itemTotal = item.unitPrice * item.quantity;
-          const discount = itemTotal * (item.discountPercent / 100);
-          return sum + (itemTotal - discount);
-        }, 0);
-
+        const totalInclusive = cart.reduce((sum, item) => sum + item.totalAmount, 0);
         const taxAmount = cart.reduce((sum, item) => sum + item.taxAmount, 0);
-        const total = Math.max(0, subtotal + taxAmount - orderDiscount);
-        const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+        const total = Math.max(0, totalInclusive - orderDiscount);
+        const subtotal = totalInclusive - taxAmount;
 
         return {
           subtotal: Math.round(subtotal * 100) / 100,
           taxAmount: Math.round(taxAmount * 100) / 100,
           total: Math.round(total * 100) / 100,
-          itemCount,
+          itemCount: cart.reduce((sum, item) => sum + item.quantity, 0),
         };
       },
     }),
     {
       name: "retailflow-pos-cart-storage",
+      storage: createJSONStorage(() => tauriStorage),
     }
   )
 );

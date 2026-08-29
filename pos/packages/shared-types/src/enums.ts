@@ -25,6 +25,7 @@ export enum PaymentMethod {
   CARD = "card",
   BANK_TRANSFER = "bank_transfer",
   CREDIT = "credit",
+  GIFT_CARD = "gift_card",
 }
 
 export enum ExpenseCategory {

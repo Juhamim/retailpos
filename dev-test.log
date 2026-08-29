@@ -1,0 +1,7 @@
+$ next dev -H 0.0.0.0 -p 3000
+  Γû▓ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Network:      http://0.0.0.0:3000
+
+ Γ£ô Starting...
+ Γ£ô Ready in 3.2s

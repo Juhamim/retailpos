@@ -8,10 +8,15 @@ import { PaymentModal } from "@/components/pos/payment-modal";
 import { CustomerSelect } from "@/components/pos/customer-select";
 import { HoldSaleDialog } from "@/components/pos/hold-sale-dialog";
 import { ReceiptDialog } from "@/components/pos/receipt-dialog";
+import { CameraScanner } from "@/components/pos/camera-scanner";
+import { playBeep } from "@/lib/audio";
 import { usePOSStore } from "@/stores/pos-store";
 import { useProductStore } from "@/stores/product-store";
 import { useSalesStore, CompletedSale } from "@/stores/sales-store";
 import { useCustomerStore } from "@/stores/customer-store";
+import { useShiftStore } from "@/stores/shift-store";
+import { useAppStore } from "@/stores/app-store";
+
 import {
   UserPlus,
   Barcode,
@@ -21,6 +26,7 @@ import {
   X,
   Search,
   CheckCircle,
+  Camera
 } from "lucide-react";
 
 export default function POSScreen() {
@@ -48,12 +54,18 @@ export default function POSScreen() {
   const deductStockForSale = useProductStore((state) => state.deductStockForSale);
   const recordSale = useSalesStore((state) => state.recordSale);
   const addCustomerOrder = useCustomerStore((state) => state.addCustomerOrder);
+  const recordCreditTransaction = useCustomerStore((state) => state.recordCreditTransaction);
+  const addSaleToShift = useShiftStore((state) => state.addSaleToShift);
+  const currentUser = useAppStore((state) => state.currentUser);
+  const activeShift = useShiftStore((state) => state.activeShift);
+
 
   const [showPayment, setShowPayment] = useState(false);
   const [showHoldDialog, setShowHoldDialog] = useState(false);
   const [showHeldSalesList, setShowHeldSalesList] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [showCustomerSelect, setShowCustomerSelect] = useState(false);
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
   const [lastSaleResult, setLastSaleResult] = useState<CompletedSale | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -62,6 +74,25 @@ export default function POSScreen() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const handleCameraScanSuccess = (barcodeVal: string) => {
+    if (!barcodeVal) return;
+    const query = barcodeVal.trim();
+    const matched = products.find(
+      (p) => p.barcode === query || p.sku.toLowerCase() === query.toLowerCase()
+    );
+
+    if (matched) {
+      if (matched.stockQuantity <= 0) {
+        showToast(`Warning: "${matched.name}" is out of stock!`);
+      }
+      addToCart(matched);
+      playBeep();
+      showToast(`Scanned & Added: ${matched.name}`);
+    } else {
+      showToast(`No item found for barcode: "${query}"`);
+    }
   };
 
   useEffect(() => {
@@ -98,6 +129,7 @@ export default function POSScreen() {
         showToast(`Warning: "${matched.name}" is out of stock!`);
       }
       addToCart(matched);
+      playBeep();
       showToast(`Added: ${matched.name}`);
       setBarcodeInput("");
     } else {
@@ -107,6 +139,7 @@ export default function POSScreen() {
       );
       if (partialMatches.length === 1) {
         addToCart(partialMatches[0]);
+        playBeep();
         showToast(`Added: ${partialMatches[0].name}`);
         setBarcodeInput("");
       } else if (partialMatches.length === 0) {
@@ -120,6 +153,11 @@ export default function POSScreen() {
   const handleCompleteSale = (payments: { method: PaymentMethod; amount: number; reference?: string }[]) => {
     if (cart.length === 0) return;
 
+    if (!activeShift) {
+      showToast("Error: Register Shift is closed. Please open shift first.");
+      return;
+    }
+
     const invoiceNumber = `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(Math.floor(1000 + Math.random() * 9000))}`;
     const primaryMethod = payments[0]?.method || PaymentMethod.CASH;
 
@@ -127,6 +165,7 @@ export default function POSScreen() {
     deductStockForSale(cart.map((item) => ({ productId: item.productId, quantity: item.quantity })));
 
     // 2. Record sale in persistent store
+    const cashierName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "Admin";
     const completed = recordSale({
       invoiceNumber,
       customerId,
@@ -139,10 +178,25 @@ export default function POSScreen() {
       paymentMethod: primaryMethod,
       payments,
       status: SaleStatus.COMPLETED,
-      cashierName: "Admin",
+      cashierName,
     });
 
-    // 3. Update customer stats if customer attached
+    // 3. Charge credit to customer if Store Credit used
+    const creditPayment = payments.find((p) => p.method === PaymentMethod.CREDIT);
+    if (creditPayment && customerId) {
+      recordCreditTransaction(
+        customerId,
+        "charge",
+        creditPayment.amount,
+        undefined,
+        `POS Checkout (Inv: ${invoiceNumber})`
+      );
+    }
+
+    // 4. Update cashier active shift totals
+    addSaleToShift(totals.total, payments);
+
+    // 5. Update customer stats if customer attached
     if (customerId) {
       addCustomerOrder(customerId, totals.total);
     }
@@ -179,6 +233,16 @@ export default function POSScreen() {
             />
           </form>
 
+          {/* Camera Scanner Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setShowCameraScanner(true)}
+            className="flex items-center justify-center h-10 w-10 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors shrink-0"
+            title="Scan barcode with camera"
+          >
+            <Camera className="h-4.5 w-4.5 text-gray-500" />
+          </button>
+
           {/* Customer Selection Button */}
           <button
             onClick={() => setShowCustomerSelect(true)}
@@ -206,6 +270,7 @@ export default function POSScreen() {
             searchQuery={barcodeInput}
             onAddProduct={(p) => {
               addToCart(p);
+              playBeep();
               showToast(`Added: ${p.name}`);
             }}
           />
@@ -350,6 +415,14 @@ export default function POSScreen() {
             showToast(`Customer: ${name}`);
           }}
           onClose={() => setShowCustomerSelect(false)}
+        />
+      )}
+
+      {/* Camera Scanner Modal Overlay */}
+      {showCameraScanner && (
+        <CameraScanner
+          onScanSuccess={handleCameraScanSuccess}
+          onClose={() => setShowCameraScanner(false)}
         />
       )}
     </div>

@@ -1,14 +1,21 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { DollarSign, TrendingUp, Package, Receipt, Download, CreditCard, Wallet, Smartphone, Printer, Eye, FileText } from "lucide-react";
+import { DollarSign, TrendingUp, Package, Receipt, Download, CreditCard, Wallet, Smartphone, Printer, Eye, FileText, FileSpreadsheet } from "lucide-react";
 import { useSalesStore, CompletedSale } from "@/stores/sales-store";
 import { useExpenseStore } from "@/stores/expense-store";
+import { useProductStore } from "@/stores/product-store";
+import { usePurchaseStore } from "@/stores/purchase-store";
 import { ReceiptDialog } from "@/components/pos/receipt-dialog";
+import { exportFinancialReportPDF, exportInventoryValuationPDF, exportGstReportCSV, exportGstr2Csv, exportGstr3bPDF } from "@/lib/pdf-export";
+
 
 export default function ReportsPage() {
   const sales = useSalesStore((state) => state.sales);
   const expenses = useExpenseStore((state) => state.expenses);
+  const products = useProductStore((state) => state.products);
+  const purchases = usePurchaseStore((state) => state.purchases);
+
 
   const [dateFilter, setDateFilter] = useState<"Today" | "7 Days" | "30 Days" | "All">("All");
   const [selectedInvoice, setSelectedInvoice] = useState<CompletedSale | null>(null);
@@ -121,6 +128,27 @@ export default function ReportsPage() {
           >
             <Download className="h-4 w-4" /> Export CSV
           </button>
+
+          <button
+            onClick={() => exportFinancialReportPDF(filteredSales, expenses, dateFilter)}
+            className="flex items-center gap-1.5 h-10 px-4 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors shadow-2xs"
+          >
+            <FileText className="h-4 w-4" /> Export PDF
+          </button>
+
+          <button
+            onClick={() => exportInventoryValuationPDF(products)}
+            className="flex items-center gap-1.5 h-10 px-4 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-2xs"
+          >
+            <Package className="h-4 w-4" /> Stock Value PDF
+          </button>
+
+          <button
+            onClick={() => exportGstReportCSV(filteredSales, dateFilter)}
+            className="flex items-center gap-1.5 h-10 px-4 rounded-xl bg-purple-600 text-white text-xs font-semibold hover:bg-purple-700 transition-colors shadow-2xs"
+          >
+            <FileSpreadsheet className="h-4 w-4" /> GST Portal Report
+          </button>
         </div>
       </div>
 
@@ -179,20 +207,29 @@ export default function ReportsPage() {
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-2xs p-6">
           <h2 className="text-base font-bold text-gray-900 mb-4">Top Performing Products</h2>
           <div className="space-y-3">
-            {topProducts.map((p, idx) => (
-              <div key={p.name} className="flex items-center justify-between p-3 rounded-xl bg-gray-50/70 border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">
-                    {idx + 1}
+            {topProducts.map((p, idx) => {
+              const maxRevenue = topProducts.length > 0 ? Math.max(...topProducts.map(tp => tp.revenue)) : 1;
+              const percent = Math.round((p.revenue / maxRevenue) * 100);
+              return (
+                <div key={p.name} className="relative p-3.5 rounded-xl border border-gray-100 overflow-hidden flex items-center justify-between transition-all hover:border-slate-300">
+                  {/* CSS Visual Bar Chart Layer */}
+                  <div
+                    className="absolute left-0 top-0 bottom-0 bg-blue-500/5 transition-all duration-500"
+                    style={{ width: `${percent}%` }}
+                  />
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center border border-blue-100">
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-slate-800">{p.name}</p>
+                      <p className="text-xs text-gray-400 font-medium">{p.units} units sold • {percent}% of top seller</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-sm text-gray-900">{p.name}</p>
-                    <p className="text-xs text-gray-400">{p.units} units sold</p>
-                  </div>
+                  <span className="relative z-10 font-bold text-sm text-slate-900">₹{p.revenue.toFixed(2)}</span>
                 </div>
-                <span className="font-bold text-sm text-gray-900">₹{p.revenue.toFixed(2)}</span>
-              </div>
-            ))}
+              );
+            })}
 
             {topProducts.length === 0 && (
               <p className="text-sm text-gray-400 text-center py-6">No sales recorded yet</p>
@@ -220,6 +257,61 @@ export default function ReportsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* GST Compliance Returns Centre */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-2xs p-6 space-y-4">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">GST Returns Compliance Centre</h2>
+          <p className="text-xs text-gray-500 mt-0.5 font-medium">Download legal GST portal filing CSVs and consolidated liability returns reports</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* GSTR-1 */}
+          <div className="border border-slate-100 rounded-xl p-4 space-y-2.5 bg-slate-50/30 flex flex-col justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-800">GSTR-1 Outward Supplies</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">CSV report listing all client sales bills, CGST/SGST breakdowns, and client registration types for portal upload.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => exportGstReportCSV(filteredSales, dateFilter)}
+              className="flex items-center justify-center gap-1.5 h-9 w-full rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-2xs"
+            >
+              <FileSpreadsheet className="h-4 w-4" /> Download GSTR-1 CSV
+            </button>
+          </div>
+
+          {/* GSTR-2 */}
+          <div className="border border-slate-100 rounded-xl p-4 space-y-2.5 bg-slate-50/30 flex flex-col justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-800">GSTR-2 Inward Supplies (ITC)</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">CSV report listing all supplier purchase bills and tax inputs paid, enabling calculation of eligible Input Tax Credits (ITC).</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => exportGstr2Csv(purchases, dateFilter)}
+              className="flex items-center justify-center gap-1.5 h-9 w-full rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-2xs"
+            >
+              <FileSpreadsheet className="h-4 w-4" /> Download GSTR-2 CSV
+            </button>
+          </div>
+
+          {/* GSTR-3B */}
+          <div className="border border-slate-100 rounded-xl p-4 space-y-2.5 bg-slate-50/30 flex flex-col justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-800">GSTR-3B Consolidated Return</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">PDF audit document reconciling total outward supplies, total inward ITC, and net GST payable to the tax department.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => exportGstr3bPDF(filteredSales, purchases, dateFilter)}
+              className="flex items-center justify-center gap-1.5 h-9 w-full rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-2xs"
+            >
+              <FileText className="h-4 w-4" /> Export GSTR-3B PDF
+            </button>
           </div>
         </div>
       </div>

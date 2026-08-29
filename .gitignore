@@ -18,4 +18,7 @@ pos/apps/desktop/src-tauri/target/release/bundle/*
 !pos/apps/desktop/src-tauri/target/release/bundle/nsis
 pos/apps/desktop/src-tauri/target/release/bundle/nsis/*
 !pos/apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+!pos/apps/desktop/src-tauri/target/release/bundle/msi
+pos/apps/desktop/src-tauri/target/release/bundle/msi/*
+!pos/apps/desktop/src-tauri/target/release/bundle/msi/*.msi
 Cargo.lock

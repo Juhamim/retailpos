@@ -1,0 +1,28 @@
+$ next dev -H 0.0.0.0 -p 3000
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Network:      http://0.0.0.0:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.9s
+ ○ Compiling / ...
+ ✓ Compiled / in 6s (538 modules)
+ GET / 307 in 6245ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 7.7s (1182 modules)
+ GET /dashboard 200 in 8024ms
+ GET / 307 in 124ms
+ GET / 307 in 101ms
+ GET /dashboard 200 in 149ms
+ ✓ Compiled /_not-found in 467ms (1171 modules)
+ GET /icons/icon-512x512.png 404 in 742ms
+ GET /icons/icon-192x192.png 404 in 751ms
+ GET /dashboard 200 in 631ms
+ GET /icons/icon-192x192.png 404 in 32ms
+ GET /icons/icon-192x192.png 404 in 33ms
+ GET / 307 in 92ms
+ GET /dashboard 200 in 47ms
+ ○ Compiling /giftcards ...
+ ✓ Compiled /giftcards in 864ms (1185 modules)
+ GET /icons/icon-192x192.png 404 in 51ms
+[?25h

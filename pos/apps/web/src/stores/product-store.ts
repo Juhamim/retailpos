@@ -1,7 +1,9 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { tauriStorage } from "@/lib/tauri-storage";
 import type { ProductWithCategory, Category, Brand } from "@retailflow/shared-types";
 import { ProductStatus, GSTRate } from "@retailflow/shared-types";
+import { playBeep } from "@/lib/audio";
 
 export interface StockAdjustment {
   id: string;
@@ -100,6 +102,7 @@ export const useProductStore = create<ProductState>()(
           updatedAt: now,
         };
         set((state) => ({ products: [newProduct, ...state.products] }));
+        playBeep();
         return newProduct;
       },
 
@@ -193,6 +196,7 @@ export const useProductStore = create<ProductState>()(
     }),
     {
       name: "retailflow-products-storage",
+      storage: createJSONStorage(() => tauriStorage),
     }
   )
 );

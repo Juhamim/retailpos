@@ -79,6 +79,9 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  .animate-spin-slow {
+    animation: spin 8s linear infinite;
+  }
 }
 
 @media print {

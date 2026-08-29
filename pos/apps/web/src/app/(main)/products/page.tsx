@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Plus, Search, Edit, Trash2, Package, X, Check, AlertCircle } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Package, X, Check, AlertCircle, Upload } from "lucide-react";
 import Link from "next/link";
 import { useProductStore } from "@/stores/product-store";
 import type { ProductWithCategory } from "@retailflow/shared-types";
@@ -12,6 +12,7 @@ const PAGE_SIZE = 10;
 export default function ProductsPage() {
   const products = useProductStore((state) => state.products);
   const categories = useProductStore((state) => state.categories);
+  const addProduct = useProductStore((state) => state.addProduct);
   const updateProduct = useProductStore((state) => state.updateProduct);
   const removeProduct = useProductStore((state) => state.removeProduct);
 
@@ -19,6 +20,100 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [page, setPage] = useState(1);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+
+  const handleBulkImportCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const lines = text.split("\n");
+        if (lines.length <= 1) {
+          alert("CSV is empty or missing headers");
+          return;
+        }
+
+        // Get headers and normalize
+        const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+        const nameIdx = headers.indexOf("name");
+        const skuIdx = headers.indexOf("sku");
+        const barcodeIdx = headers.indexOf("barcode");
+        const categoryIdx = headers.indexOf("category");
+        const purchaseIdx = headers.indexOf("purchaseprice");
+        const sellingIdx = headers.indexOf("sellingprice");
+        const gstIdx = headers.indexOf("gstrate");
+        const stockIdx = headers.indexOf("stock");
+        const unitIdx = headers.indexOf("unit");
+
+        if (nameIdx === -1 || sellingIdx === -1) {
+          alert("CSV must contain at least 'Name' and 'SellingPrice' columns");
+          return;
+        }
+
+        let importedCount = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+
+          const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+          if (cols.length < headers.length) continue;
+
+          const name = cols[nameIdx];
+          if (!name) continue;
+
+          const sku = skuIdx !== -1 && cols[skuIdx] ? cols[skuIdx] : `SKU-${Date.now()}-${i}`;
+          const barcode = barcodeIdx !== -1 && cols[barcodeIdx] ? cols[barcodeIdx] : `890${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+          const categoryName = categoryIdx !== -1 && cols[categoryIdx] ? cols[categoryIdx] : "General";
+          
+          const cat = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
+          const categoryId = cat ? cat.id : categories[0]?.id || "cat-1";
+
+          const purchasePrice = purchaseIdx !== -1 && cols[purchaseIdx] ? parseFloat(cols[purchaseIdx]) : 0;
+          const sellingPrice = parseFloat(cols[sellingIdx]) || 0;
+          
+          let gstRate = GSTRate.EIGHTEEN;
+          if (gstIdx !== -1 && cols[gstIdx]) {
+            const rateStr = cols[gstIdx].replace(/%|gst/gi, "");
+            if (rateStr === "0" || rateStr === "zero") gstRate = GSTRate.ZERO;
+            else if (rateStr === "5") gstRate = GSTRate.FIVE;
+            else if (rateStr === "12") gstRate = GSTRate.TWELVE;
+            else if (rateStr === "18") gstRate = GSTRate.EIGHTEEN;
+            else if (rateStr === "28") gstRate = GSTRate.TWENTY_EIGHT;
+          }
+
+          const stockQuantity = stockIdx !== -1 && cols[stockIdx] ? parseInt(cols[stockIdx]) || 0 : 100;
+          const unit = unitIdx !== -1 && cols[unitIdx] ? cols[unitIdx] : "pcs";
+
+          addProduct({
+            name,
+            sku,
+            barcode,
+            categoryId,
+            categoryName,
+            purchasePrice,
+            sellingPrice,
+            gstRate,
+            discountPercent: 0,
+            stockQuantity,
+            reorderLevel: 10,
+            unit,
+            status: ProductStatus.ACTIVE,
+            isWeighable: false
+          });
+          importedCount++;
+        }
+
+        setImportStatus(`Successfully imported ${importedCount} products!`);
+        setTimeout(() => setImportStatus(null), 4000);
+      } catch (err) {
+        alert("Failed to parse CSV file.");
+      }
+    };
+    reader.readAsText(file);
+  };
 
   // Edit Modal State
   const [editingProduct, setEditingProduct] = useState<ProductWithCategory | null>(null);
@@ -93,14 +188,37 @@ export default function ProductsPage() {
             Manage your store's inventory, barcodes, pricing, and GST rates
           </p>
         </div>
-        <Link
-          href="/products/new"
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
-        >
-          <Plus className="h-4 w-4" />
-          Add New Product
-        </Link>
+        <div className="flex items-center gap-2">
+          <input
+            type="file"
+            id="csv-bulk-import-input"
+            accept=".csv"
+            onChange={handleBulkImportCsv}
+            className="hidden"
+          />
+          <button
+            onClick={() => document.getElementById("csv-bulk-import-input")?.click()}
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-300 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            <Upload className="h-4 w-4" />
+            Import CSV
+          </button>
+          <Link
+            href="/products/new"
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Plus className="h-4 w-4" />
+            Add New Product
+          </Link>
+        </div>
       </div>
+
+      {importStatus && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-xs font-semibold text-emerald-800">
+          <Check className="h-4 w-4 text-emerald-600 animate-bounce" />
+          {importStatus}
+        </div>
+      )}
 
       {/* Filters Bar */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-2xs p-4 flex flex-wrap items-center gap-3">

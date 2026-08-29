@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { tauriStorage } from "@/lib/tauri-storage";
 import type { CartItem } from "@retailflow/shared-types";
 import { PaymentMethod, SaleStatus } from "@retailflow/shared-types";
 
@@ -26,6 +27,7 @@ interface SalesState {
   recordSale: (sale: Omit<CompletedSale, "id" | "createdAt">) => CompletedSale;
   getSaleByInvoice: (invoiceNumber: string) => CompletedSale | undefined;
   getRecentSales: (limit?: number) => CompletedSale[];
+  updateSaleStatus: (invoiceNumber: string, status: SaleStatus) => void;
   getSalesSummary: () => {
     totalRevenue: number;
     totalOrders: number;
@@ -118,6 +120,14 @@ export const useSalesStore = create<SalesState>()(
         return get().sales.slice(0, limit);
       },
 
+      updateSaleStatus: (invoiceNumber, status) => {
+        set((state) => ({
+          sales: state.sales.map((s) =>
+            s.invoiceNumber === invoiceNumber ? { ...s, status } : s
+          ),
+        }));
+      },
+
       getSalesSummary: () => {
         const sales = get().sales;
         const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
@@ -150,6 +160,7 @@ export const useSalesStore = create<SalesState>()(
     }),
     {
       name: "retailflow-sales-storage",
+      storage: createJSONStorage(() => tauriStorage),
     }
   )
 );

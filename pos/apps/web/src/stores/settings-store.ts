@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { tauriStorage } from "@/lib/tauri-storage";
 import type { AppSettings, ShopSettings, TaxSettings, POSSettings, BackupSettings } from "@retailflow/shared-types";
 import { GSTRate, InvoiceFormat } from "@retailflow/shared-types";
 
@@ -15,11 +16,11 @@ interface SettingsState {
 const DEFAULT_SETTINGS: AppSettings = {
   id: "app-settings-default",
   shop: {
-    shopName: "RetailFlow Mart",
-    address: "Shop #14, Ground Floor, Central Plaza, MG Road, Bangalore 560001",
+    shopName: "RetailFlow Mart - Kerala",
+    address: "Shop #14, Ground Floor, Central Plaza, MG Road, Kochi, Kerala 682001",
     phone: "+91 98765 43210",
     email: "contact@retailflowmart.in",
-    gstNumber: "29ABCDE1234F1Z5",
+    gstNumber: "32ABCDE1234F1Z5",
     currency: "INR",
     currencySymbol: "₹",
   },
@@ -94,6 +95,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "retailflow-settings-storage",
+      storage: createJSONStorage(() => tauriStorage),
     }
   )
 );

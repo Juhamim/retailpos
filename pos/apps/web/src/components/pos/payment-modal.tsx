@@ -1,8 +1,9 @@
-"use client";
-
 import React, { useState } from "react";
 import { PaymentMethod } from "@retailflow/shared-types";
-import { X, Banknote, CreditCard, Smartphone, Split, CheckCircle2, ArrowRight } from "lucide-react";
+import { X, Banknote, CreditCard, Smartphone, Split, CheckCircle2, ArrowRight, BookOpen, Gift, Percent } from "lucide-react";
+import { usePOSStore } from "@/stores/pos-store";
+import { useCustomerStore } from "@/stores/customer-store";
+import { useGiftCardStore } from "@/stores/giftcard-store";
 
 interface PaymentModalProps {
   total: number;
@@ -11,10 +12,28 @@ interface PaymentModalProps {
 }
 
 export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps) {
+  const customerId = usePOSStore((s) => s.customerId);
+  const customers = useCustomerStore((s) => s.customers);
+  const attachedCustomer = customers.find(c => c.id === customerId);
+  const deductLoyaltyPoints = useCustomerStore((s) => s.deductLoyaltyPoints);
+
+  const { giftCards, deductGiftCard } = useGiftCardStore();
+
   const [mode, setMode] = useState<"single" | "split">("single");
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
-  const [cashAmount, setCashAmount] = useState(total.toFixed(2));
   const [reference, setReference] = useState("");
+
+  // Gift Card payment states
+  const [giftCardCode, setGiftCardCode] = useState("");
+  const [giftCardError, setGiftCardError] = useState("");
+  const [verifiedGiftCard, setVerifiedGiftCard] = useState<any | null>(null);
+
+  // Loyalty Redemption states
+  const [loyaltyRedeemed, setLoyaltyRedeemed] = useState<number>(0);
+  const loyaltyAmount = loyaltyRedeemed; // 1 Point = 1 Rupee discount
+
+  const netDue = Math.max(0, total - loyaltyAmount);
+  const [cashAmount, setCashAmount] = useState(netDue.toFixed(2));
 
   // Split Payment states
   const [splitCash, setSplitCash] = useState<string>("0");
@@ -22,24 +41,71 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
   const [splitCard, setSplitCard] = useState<string>("0");
 
   const cashTendered = parseFloat(cashAmount) || 0;
-  const change = Math.max(0, cashTendered - total);
+  const change = Math.max(0, cashTendered - netDue);
 
   // Split calculation
   const totalSplitPaid = (parseFloat(splitCash) || 0) + (parseFloat(splitUpi) || 0) + (parseFloat(splitCard) || 0);
-  const splitRemaining = Math.max(0, total - totalSplitPaid);
-  const isSplitValid = Math.abs(total - totalSplitPaid) < 0.01;
+  const splitRemaining = Math.max(0, netDue - totalSplitPaid);
+  const isSplitValid = Math.abs(netDue - totalSplitPaid) < 0.01;
+
+  const handleVerifyGiftCard = () => {
+    setGiftCardError("");
+    setVerifiedGiftCard(null);
+    const code = giftCardCode.trim();
+    if (!code) return;
+
+    const card = giftCards.find((c) => c.cardCode === code);
+    if (!card) {
+      setGiftCardError("Gift card not found");
+      return;
+    }
+    if (card.status !== "active") {
+      setGiftCardError(`Gift card is ${card.status}`);
+      return;
+    }
+    if (new Date(card.expiryDate).getTime() < Date.now()) {
+      setGiftCardError("Gift card has expired");
+      return;
+    }
+    
+    setVerifiedGiftCard(card);
+    setReference(card.cardCode);
+  };
 
   const handleConfirmSingle = () => {
+    // 1. Deduct Gift Card if selected
+    if (selectedMethod === PaymentMethod.GIFT_CARD) {
+      if (!verifiedGiftCard) {
+        alert("Please verify the gift card code first");
+        return;
+      }
+      const res = deductGiftCard(verifiedGiftCard.cardCode, netDue);
+      if (!res.success) {
+        alert(res.error || "Failed to process gift card deduction");
+        return;
+      }
+    }
+
+    // 2. Deduct Loyalty points if applied
+    if (loyaltyRedeemed > 0 && attachedCustomer) {
+      deductLoyaltyPoints(attachedCustomer.id, loyaltyRedeemed);
+    }
+
     const payments: Array<{ method: PaymentMethod; amount: number; reference?: string }> = [];
     if (selectedMethod === PaymentMethod.CASH) {
-      payments.push({ method: PaymentMethod.CASH, amount: total });
+      payments.push({ method: PaymentMethod.CASH, amount: netDue });
     } else {
-      payments.push({ method: selectedMethod, amount: total, reference: reference.trim() || undefined });
+      payments.push({ method: selectedMethod, amount: netDue, reference: reference.trim() || undefined });
     }
     onComplete(payments);
   };
 
   const handleConfirmSplit = () => {
+    // Deduct Loyalty points if applied
+    if (loyaltyRedeemed > 0 && attachedCustomer) {
+      deductLoyaltyPoints(attachedCustomer.id, loyaltyRedeemed);
+    }
+
     const payments: Array<{ method: PaymentMethod; amount: number; reference?: string }> = [];
     const c = parseFloat(splitCash) || 0;
     const u = parseFloat(splitUpi) || 0;
@@ -54,7 +120,7 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
 
   const autoFillRemaining = (type: "cash" | "upi" | "card") => {
     const current = totalSplitPaid - (parseFloat(type === "cash" ? splitCash : type === "upi" ? splitUpi : splitCard) || 0);
-    const remainder = Math.max(0, total - current);
+    const remainder = Math.max(0, netDue - current);
     if (type === "cash") setSplitCash(remainder.toFixed(2));
     if (type === "upi") setSplitUpi(remainder.toFixed(2));
     if (type === "card") setSplitCard(remainder.toFixed(2));
@@ -112,28 +178,61 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {mode === "single" ? (
             <>
+              {/* Customer Loyalty Redemption Panel */}
+              {attachedCustomer && attachedCustomer.loyaltyPoints > 0 && (
+                <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-indigo-900 flex items-center gap-1">
+                      <Percent className="h-4 w-4 text-indigo-600" /> Redeem Loyalty Points
+                    </span>
+                    <span className="text-gray-500 font-medium">Available: {attachedCustomer.loyaltyPoints} pts</span>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="number"
+                      min={0}
+                      max={Math.min(attachedCustomer.loyaltyPoints, Math.ceil(total))}
+                      value={loyaltyRedeemed || ""}
+                      onChange={(e) => {
+                        const val = Math.min(attachedCustomer.loyaltyPoints, Math.min(Math.ceil(total), Math.max(0, parseInt(e.target.value) || 0)));
+                        setLoyaltyRedeemed(val);
+                      }}
+                      placeholder="Enter points to redeem"
+                      className="flex-grow h-9 px-3 border border-indigo-200 rounded-lg text-xs font-bold focus:outline-none"
+                    />
+                    {loyaltyRedeemed > 0 && (
+                      <span className="text-xs font-black text-indigo-700 whitespace-nowrap">- ₹{loyaltyAmount.toFixed(2)} Off</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Payment Methods Grid */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-5 gap-1.5">
                 {[
-                  { id: PaymentMethod.CASH, label: "Cash", icon: Banknote },
-                  { id: PaymentMethod.UPI, label: "UPI / QR", icon: Smartphone },
-                  { id: PaymentMethod.CARD, label: "Card", icon: CreditCard },
+                  { id: PaymentMethod.CASH, label: "Cash", icon: Banknote, enabled: true },
+                  { id: PaymentMethod.UPI, label: "UPI / QR", icon: Smartphone, enabled: true },
+                  { id: PaymentMethod.CARD, label: "Card", icon: CreditCard, enabled: true },
+                  { id: PaymentMethod.GIFT_CARD, label: "Gift Card", icon: Gift, enabled: true },
+                  { id: PaymentMethod.CREDIT, label: "Khata", icon: BookOpen, enabled: !!attachedCustomer },
                 ].map((pm) => (
                   <button
                     key={pm.id}
+                    disabled={!pm.enabled}
                     onClick={() => {
                       setSelectedMethod(pm.id);
-                      setCashAmount(total.toFixed(2));
+                      setCashAmount(netDue.toFixed(2));
                       setReference("");
                     }}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
+                    title={!pm.enabled ? "Select a customer on cart first" : undefined}
+                    className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${
                       selectedMethod === pm.id
                         ? "border-blue-600 bg-blue-50/70 text-blue-700 shadow-2xs"
                         : "border-gray-200 hover:border-gray-300 text-gray-600 bg-white"
-                    }`}
+                    } ${!pm.enabled ? "opacity-35 cursor-not-allowed" : ""}`}
                   >
-                    <pm.icon className="h-5 w-5" />
-                    <span className="text-xs font-bold">{pm.label}</span>
+                    <pm.icon className="h-4.5 w-4.5" />
+                    <span className="text-[9px] font-bold tracking-tight whitespace-nowrap">{pm.label}</span>
                   </button>
                 ))}
               </div>
@@ -158,13 +257,13 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
                   {/* Quick Denominations */}
                   <div className="flex gap-1.5">
                     {[
-                      total,
-                      Math.ceil(total / 10) * 10,
-                      Math.ceil(total / 50) * 50,
-                      Math.ceil(total / 100) * 100,
-                      Math.ceil(total / 500) * 500,
+                      netDue,
+                      Math.ceil(netDue / 10) * 10,
+                      Math.ceil(netDue / 50) * 50,
+                      Math.ceil(netDue / 100) * 100,
+                      Math.ceil(netDue / 500) * 500,
                     ]
-                      .filter((v, i, a) => a.indexOf(v) === i && v >= total)
+                      .filter((v, i, a) => a.indexOf(v) === i && v >= netDue)
                       .slice(0, 4)
                       .map((amt) => (
                         <button
@@ -180,8 +279,69 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
                 </div>
               )}
 
-              {/* Reference */}
-              {selectedMethod !== PaymentMethod.CASH && (
+              {/* Gift Card Input */}
+              {selectedMethod === PaymentMethod.GIFT_CARD && (
+                <div className="space-y-3 bg-blue-50/50 p-3.5 rounded-xl border border-blue-200">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700 block">Scan / Enter Gift Card Code</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={giftCardCode}
+                        onChange={(e) => setGiftCardCode(e.target.value)}
+                        placeholder="e.g. GC-204928"
+                        className="flex-grow h-10 px-3.5 border border-gray-200 rounded-xl text-sm font-mono font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyGiftCard}
+                        className="h-10 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl"
+                      >
+                        Verify
+                      </button>
+                    </div>
+                  </div>
+
+                  {giftCardError && (
+                    <p className="text-xs font-semibold text-rose-600">⚠ {giftCardError}</p>
+                  )}
+
+                  {verifiedGiftCard && (
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between font-semibold text-emerald-800 bg-emerald-50 border border-emerald-100 p-2 rounded-lg">
+                        <span>Card Balance:</span>
+                        <span className="font-extrabold">₹{verifiedGiftCard.currentBalance.toFixed(2)}</span>
+                      </div>
+                      {verifiedGiftCard.currentBalance < netDue && (
+                        <p className="text-[10px] text-amber-700 font-bold">⚠ Note: Insufficient balance. Card has ₹{verifiedGiftCard.currentBalance.toFixed(2)} but order requires ₹{netDue.toFixed(2)}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Reference / Credit Info Banner */}
+              {selectedMethod === PaymentMethod.CREDIT && attachedCustomer && (
+                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl space-y-1.5 animate-in fade-in">
+                  <div className="flex items-center gap-1.5 text-rose-800">
+                    <BookOpen className="h-4 w-4" />
+                    <span className="text-xs font-bold">Posting to Khata / Store Credit</span>
+                  </div>
+                  <p className="text-[11px] text-rose-700 leading-normal">
+                    The total order amount will be charged as outstanding debt on <strong className="text-rose-900">{attachedCustomer.name}</strong>'s ledger profile.
+                  </p>
+                  <div className="flex justify-between text-xs text-rose-800 pt-1.5 border-t border-rose-200/50 font-bold">
+                    <span>Current Credit Debt:</span>
+                    <span>₹{attachedCustomer.creditBalance.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-rose-800 font-bold">
+                    <span>New Credit Debt:</span>
+                    <span>₹{(attachedCustomer.creditBalance + netDue).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
+              {selectedMethod !== PaymentMethod.CASH && selectedMethod !== PaymentMethod.CREDIT && selectedMethod !== PaymentMethod.GIFT_CARD && (
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-gray-700 block">
                     Transaction ID / Reference (Optional)
@@ -287,11 +447,16 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
           <button
             type="button"
             onClick={mode === "single" ? handleConfirmSingle : handleConfirmSplit}
-            disabled={mode === "single" ? cashTendered < total && selectedMethod === PaymentMethod.CASH : !isSplitValid}
+            disabled={
+              mode === "single"
+                ? (selectedMethod === PaymentMethod.CASH && cashTendered < netDue) ||
+                  (selectedMethod === PaymentMethod.GIFT_CARD && (!verifiedGiftCard || verifiedGiftCard.currentBalance < netDue))
+                : !isSplitValid
+            }
             className="flex-[2] h-11 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <CheckCircle2 className="h-4 w-4" />
-            Complete Sale (₹{total.toFixed(2)})
+            Complete Sale (₹{netDue.toFixed(2)})
           </button>
         </div>
       </div>
