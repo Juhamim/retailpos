@@ -73,8 +73,31 @@ Engineered with a **Local-First Core (Tauri + Next.js + SQLite)** and powered by
 
 ---
 
-### 6. Executive PDF Setup & Operations Manual
-- Includes a professionally formatted 6-page documentation manual ([`RETAILFLOW_POS_SETUP_GUIDE.pdf`](file:///e:/pos/publish/RETAILFLOW_POS_SETUP_GUIDE.pdf)) covering architecture, installation, dynamic UPI QR setup, customer Cloudflare token generation, D1 database replication, and disaster recovery.
+### 7. Executive Tax Invoice & Thermal Receipt Design Overhaul
+- **Statutory Indian GST Compliance & Symmetrical Visual Architecture**:
+  - Completely redesigned standard A4/A5 Tax Invoices and 80mm thermal receipts with high-contrast typography, brand color accent ribbons, and clean grid layouts.
+  - Symmetrical **Billed By (Supplier)** and **Billed To (Customer / Place of Supply)** cards with GSTIN and state codes.
+- **HSN Tax Breakdown Matrix**:
+  - Automatic calculation and display of statutory HSN/SAC breakdown tables with Taxable Value, CGST rate & amount, SGST rate & amount, and Total Tax.
+- **Statutory Amount in Words**:
+  - Automatic conversion of grand totals into words following the Indian numbering system (e.g. *"Rupees Twelve Thousand Four Hundred Fifty Only"*).
+- **Executive PDF Export**:
+  - Direct browser and desktop print engine aligned with the new visual layout and side-by-side totals card.
+
+---
+
+### 8. Dynamic Google Sheets Live Sync & Executive Analytics
+- **Live Cloud Spreadsheet Integration**:
+  - Merchants can stream their checkout sales, live catalog inventory levels, and shift closing audits directly into a dynamic Google Sheet workbook in real time.
+- **Zero-Code Google Apps Script Webhook Bridge**:
+  - Built-in 1-click Apps Script code generator in **Settings → Google Sheets Sync** that routes data dynamically into dedicated tabs:
+    - `Sales_Ledger`: Detailed ledger of all completed sales, payment modes, GST amounts, item summaries, and cashier tags.
+    - `Inventory_Live`: Real-time stock counts, reorder thresholds, inventory valuation, and stock status alerts.
+    - `Shift_Audits`: Shift reconciliation records with opening floats, expected cash, actual counted cash, and variance tracking.
+- **Dynamic Charts & Dashboards**:
+  - Google Sheets template workbook pre-configured with `SUMIFS`, `QUERY`, and dynamic Google Charts for executive sales trends, top-selling categories, and cashier reconciliation.
+- **Offline Queuing**:
+  - If the store temporarily loses internet connectivity, transactions are safely queued in local storage (`rf_gsheet_offline_queue`) and automatically flushed when the connection is restored.
 
 ---
 
@@ -84,12 +107,12 @@ All production packages are verified with SHA-256 cryptographic hashes:
 
 | Filename | Type | Size | SHA-256 Checksum |
 |---|---|---|---|
-| `RetailFlow_POS_v1.0.0_Setup.exe` | Windows NSIS Setup | 3.54 MB | `FAEE11E540C623D5E37407AD0E21D66C23F03AE4C6E090E89288B81DA0D1EEE5` |
-| `RetailFlow_POS_v1.0.0_Enterprise.msi` | Windows Installer | 4.77 MB | `BC11C6C857459AC7AD4CD2CEF802081903A513C5349A56D230D88EAB04012060` |
-| `RetailFlow_POS_Portable.exe` | Standalone Executable | 9.93 MB | `D56C825E425A7B7421F30EC5F3915BEDEEAB51E59442D99AD6680922360E529D` |
-| `RetailFlow_POS_v1.0.0_x64-setup.nsis.zip` | Auto-Updater Differential | 3.54 MB | `CB5960559A6DF57F29C1F8C591CEE0BAF7FA20475CC14869442BA65905158861` |
-| `RETAILFLOW_POS_SETUP_GUIDE.pdf` | Setup & Deployment PDF | 76.5 KB | `C5BE6F5EEC1592641E7B6EA2488D5CE0D8E17467A2183AFA3352FE16FE722579` |
-| `latest.json` | Tauri Updater Manifest | 511 B | `BDB2AE1E7B1F540E48DC69F8E62C8E2E72980415E7ED3BC52EFC34319475E6DD` |
+| `RetailFlow_POS_v1.0.0_Setup.exe` | Windows NSIS Setup | 3.54 MB | `f90d6961a73be4aaafab1a8a1c2e76468bb538e6b20c4e4790078d77d401a0e8` |
+| `RetailFlow_POS_v1.0.0_Enterprise.msi` | Windows Installer | 4.77 MB | `a5ca63cd0f5c6b9d5414a1cb44e0b81962103f9c497c4e0ed26674ef0f158deb` |
+| `RetailFlow_POS_Portable.exe` | Standalone Executable | 9.94 MB | `5871ac17be3f2e3abd75f876ce0e743d082d830cb5ef43b7c780c9ce02208b65` |
+| `RetailFlow_POS_v1.0.0_x64-setup.nsis.zip` | Auto-Updater Differential | 3.54 MB | `3515c6ceb8f250258ba483105fb1fca1ab922ad2d2f87c8ba42141a27f3f0f0a` |
+| `RETAILFLOW_POS_SETUP_GUIDE.pdf` | Setup & Deployment PDF | 76.5 KB | `c5be6f5eec1592641e7b6ea2488d5ce0d8e17467a2183afa3352fe16fe722579` |
+| `latest.json` | Tauri Updater Manifest | 511 B | `bdb2ae1e7b1f540e48dc69f8e62c8e2e72980415e7ed3bc52efc34319475e6dd` |
 
 ---
 
@@ -114,6 +137,8 @@ msiexec /i RetailFlow_POS_v1.0.0_Enterprise.msi /qn /norestart
 
 ## 📋 Full Changelog
 
+- **feat(invoice)**: Complete redesign of A4 Tax Invoices and 80mm thermal receipts with Indian GST compliance, HSN tax breakdown matrix, Amount in Words in Indian numbering system, and dynamic UPI QR code.
+- **feat(google-sheets)**: Real-time background sync engine to Google Sheets with pre-configured multi-tab workbook structure, offline queueing, and Google Apps Script bridge.
 - **feat(core)**: Complete Windows x64 native packaging via Tauri v1 with hardware acceleration and silent crash prevention.
 - **feat(upi)**: Integrated dynamic NPCI UPI QR specification (`upi://pay?pa=...`) for checkout screens, thermal receipts, and A4 billing.
 - **feat(branding)**: Built real-time Store Logo Uploader with instant preview, canvas base64 serialization, and receipt header injection.

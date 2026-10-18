@@ -27,7 +27,8 @@ import {
   UploadCloud,
   DownloadCloud,
   Database,
-  ArrowRight
+  ArrowRight,
+  FileSpreadsheet
 } from "lucide-react";
 import { useSettingsStore } from "@/stores/settings-store";
 import { GSTRate, InvoiceFormat } from "@retailflow/shared-types";
@@ -44,15 +45,17 @@ import { FactoryResetModal } from "@/components/settings/factory-reset-modal";
 import { LogoUploader } from "@/components/settings/logo-uploader";
 import { generateUpiQrDataUrl } from "@/lib/upi-qr";
 import { CloudflareWizardModal } from "@/components/settings/cloudflare-wizard-modal";
+import { GoogleSheetsSettingsPanel } from "@/components/settings/google-sheets-modal";
 import { cloudflareClient, RemoteBackupEntry } from "@/lib/cloudflare-client";
 import { cloudflareBackupService } from "@/lib/cloudflare-backup-service";
 import { cloudflareSyncService } from "@/lib/cloudflare-sync-service";
 
-type Tab = "shop" | "cloudflare" | "tax" | "pos" | "backup" | "network" | "theme" | "conflict";
+type Tab = "shop" | "cloudflare" | "googlesheets" | "tax" | "pos" | "backup" | "network" | "theme" | "conflict";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "shop", label: "Shop Details & Logo", icon: Store },
   { id: "cloudflare", label: "Cloudflare Sync & Backup", icon: CloudLightning },
+  { id: "googlesheets", label: "Google Sheets Sync", icon: FileSpreadsheet },
   { id: "tax", label: "Tax & GST", icon: Receipt },
   { id: "pos", label: "POS & Billing", icon: CreditCard },
   { id: "backup", label: "Local Day-End Backup", icon: Cloud },
@@ -1389,6 +1392,13 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB: GOOGLE SHEETS LIVE SYNC */}
+          {/* ========================================================================= */}
+          {activeTab === "googlesheets" && (
+            <GoogleSheetsSettingsPanel />
           )}
         </div>
       </div>

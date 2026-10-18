@@ -58,6 +58,17 @@ export interface CloudflareSettings {
   lastBackupAt?: string;
 }
 
+export interface GoogleSheetsSettings {
+  enabled: boolean;
+  webhookUrl: string;       // Google Apps Script Web App URL
+  spreadsheetUrl?: string;   // Direct view link to the Google Sheet
+  autoSyncSales: boolean;    // Auto-append sale row on completed checkout
+  autoSyncInventory: boolean;// Update inventory live tab
+  autoSyncShifts: boolean;   // Append shift reconciliation row on close
+  lastSyncedAt?: string;
+  pendingCount?: number;
+}
+
 export interface AppSettings {
   id: string;
   isSetupCompleted?: boolean;
@@ -66,6 +77,7 @@ export interface AppSettings {
   pos: POSSettings;
   backup: BackupSettings;
   cloudflare?: CloudflareSettings;
+  googleSheets?: GoogleSheetsSettings;
   theme: "light" | "dark" | "system";
   updatedAt: string;
 }

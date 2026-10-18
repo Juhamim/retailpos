@@ -17,6 +17,7 @@ import { useCustomerStore } from "@/stores/customer-store";
 import { useShiftStore } from "@/stores/shift-store";
 import { useAppStore } from "@/stores/app-store";
 import { cloudflareSyncService } from "@/lib/cloudflare-sync-service";
+import { googleSheetsSyncService } from "@/lib/google-sheets-sync";
 
 import {
   UserPlus,
@@ -229,6 +230,11 @@ export default function POSScreen() {
     // 6. Push real-time sale to Cloudflare Worker Web Page
     cloudflareSyncService.pushSaleNow(completed).catch((err) => {
       console.warn("Background cloudflare sale push error:", err);
+    });
+
+    // 7. Live stream sale transaction to customer's Google Sheet
+    googleSheetsSyncService.syncSale(completed).catch((err) => {
+      console.warn("Background Google Sheets sync error:", err);
     });
 
     setLastSaleResult(completed);

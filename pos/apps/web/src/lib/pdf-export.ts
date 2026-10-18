@@ -6,6 +6,7 @@ import type { Shift } from "../stores/shift-store";
 import type { PurchaseRecord } from "../stores/purchase-store";
 import type { PurchaseReturnRecord } from "../stores/purchase-return-store";
 import { generatePdfUpiQr } from "./upi-qr";
+import { numberToWordsIndian } from "./invoice-utils";
 
 // Format helper
 const formatCurrency = (val: number) => `₹${val.toFixed(2)}`;
@@ -183,14 +184,31 @@ export const exportTaxInvoicePDF = async (sale: CompletedSale, shop: any) => {
     }
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 6;
+  const tableFinalY = (doc as any).lastAutoTable.finalY + 4;
+
+  // 5b. Statutory Amount in Words Banner
+  doc.setFillColor(238, 242, 255); // indigo-50
+  doc.roundedRect(margin, tableFinalY, pageWidth - (margin * 2), 6.5, 1, 1, "F");
+  doc.setDrawColor(199, 210, 254);
+  doc.roundedRect(margin, tableFinalY, pageWidth - (margin * 2), 6.5, 1, 1, "D");
+
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(67, 56, 202); // indigo-700
+  doc.text("Amount in Words: ", margin + 3, tableFinalY + 4.2);
+  doc.setFont("Helvetica", "bold");
+  doc.setTextColor(15, 23, 42);
+  doc.text(numberToWordsIndian(sale.totalAmount), margin + 27, tableFinalY + 4.2);
+
+  const finalY = tableFinalY + 9;
+  const panelHeight = 44;
 
   // 6. Summary Panels (Side by Side)
   // Left: GST Breakup & Notes
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(margin, finalY, 100, 36, 2, 2, "F");
+  doc.roundedRect(margin, finalY, 100, panelHeight, 2, 2, "F");
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(margin, finalY, 100, 36, 2, 2, "D");
+  doc.roundedRect(margin, finalY, 100, panelHeight, 2, 2, "D");
 
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(8);
@@ -200,11 +218,10 @@ export const exportTaxInvoicePDF = async (sale: CompletedSale, shop: any) => {
   doc.setFont("Helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(71, 85, 105);
-  doc.text(`Total Taxable Supplies : ₹${(sale.subtotal - sale.discountAmount).toFixed(2)}`, margin + 3, finalY + 11);
-  doc.text(`Central Tax (CGST Total): ₹${(sale.taxAmount / 2).toFixed(2)}`, margin + 3, finalY + 16);
-  doc.text(`State Tax (SGST Total)  : ₹${(sale.taxAmount / 2).toFixed(2)}`, margin + 3, finalY + 21);
-  doc.text(`Total GST Liability     : ₹${sale.taxAmount.toFixed(2)}`, margin + 3, finalY + 26);
-  doc.text(`Terms: Warranty claims valid with this original tax invoice.`, margin + 3, finalY + 32);
+  doc.text(`Total Taxable Supplies : ₹${(sale.subtotal - sale.discountAmount).toFixed(2)}`, margin + 3, finalY + 10.5);
+  doc.text(`Central Tax (CGST Total): ₹${(sale.taxAmount / 2).toFixed(2)}`, margin + 3, finalY + 15);
+  doc.text(`State Tax (SGST Total)  : ₹${(sale.taxAmount / 2).toFixed(2)}`, margin + 3, finalY + 19.5);
+  doc.text(`Total GST Liability     : ₹${sale.taxAmount.toFixed(2)}`, margin + 3, finalY + 24);
 
   if (shop.upiId) {
     try {
@@ -216,71 +233,85 @@ export const exportTaxInvoicePDF = async (sale: CompletedSale, shop: any) => {
       });
       if (upiQrDataUrl) {
         doc.setFillColor(255, 255, 255);
-        doc.roundedRect(margin + 2, finalY + 34, 16, 16, 1, 1, "F");
-        doc.addImage(upiQrDataUrl, "PNG", margin + 2, finalY + 34, 16, 16, undefined, "FAST");
+        doc.roundedRect(margin + 2.5, finalY + 27, 14, 14, 1, 1, "F");
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(margin + 2.5, finalY + 27, 14, 14, 1, 1, "D");
+        doc.addImage(upiQrDataUrl, "PNG", margin + 3, finalY + 27.5, 13, 13, undefined, "FAST");
+
         doc.setFont("Helvetica", "bold");
-        doc.setFontSize(7);
-        doc.setTextColor(15, 23, 42);
-        doc.text("SCAN TO PAY VIA UPI", margin + 20, finalY + 39);
-        doc.setFont("Helvetica", "normal");
         doc.setFontSize(6.5);
+        doc.setTextColor(15, 23, 42);
+        doc.text("INSTANT UPI QR PAYMENT", margin + 19, finalY + 31);
+        doc.setFont("Helvetica", "normal");
+        doc.setFontSize(6);
         doc.setTextColor(71, 85, 105);
-        doc.text(`UPI ID: ${shop.upiId}`, margin + 20, finalY + 44);
-        doc.text(`Amount: ₹${sale.totalAmount.toFixed(2)}`, margin + 20, finalY + 48);
+        doc.text(`VPA: ${shop.upiId}`, margin + 19, finalY + 35);
+        doc.text(`GPay • PhonePe • Paytm • Cred • BHIM`, margin + 19, finalY + 38.5);
       }
     } catch {}
+  } else {
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Warranty claims valid with this original tax invoice.`, margin + 3, finalY + 32);
   }
 
   // Right: Grand Total Box
-  doc.setFillColor(241, 245, 249);
-  doc.roundedRect(120, finalY, 76, 36, 2, 2, "F");
-  doc.setDrawColor(203, 213, 225);
-  doc.roundedRect(120, finalY, 76, 36, 2, 2, "D");
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(120, finalY, 76, panelHeight, 2, 2, "F");
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(120, finalY, 76, panelHeight, 2, 2, "D");
 
   doc.setFont("Helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(51, 65, 85);
-  doc.text("Items Subtotal:", 123, finalY + 6);
+  doc.text("Items Gross Subtotal:", 123, finalY + 6);
   doc.text(`₹${sale.subtotal.toFixed(2)}`, 193, finalY + 6, { align: "right" });
 
-  doc.text("GST Tax Total:", 123, finalY + 12);
-  doc.text(`+₹${sale.taxAmount.toFixed(2)}`, 193, finalY + 12, { align: "right" });
+  doc.text("Central GST (CGST):", 123, finalY + 11.5);
+  doc.text(`+₹${(sale.taxAmount / 2).toFixed(2)}`, 193, finalY + 11.5, { align: "right" });
+
+  doc.text("State GST (SGST):", 123, finalY + 17);
+  doc.text(`+₹${(sale.taxAmount / 2).toFixed(2)}`, 193, finalY + 17, { align: "right" });
 
   if (sale.discountAmount > 0) {
     doc.setTextColor(16, 185, 129); // green
-    doc.text("Discounts:", 123, finalY + 18);
-    doc.text(`-₹${sale.discountAmount.toFixed(2)}`, 193, finalY + 18, { align: "right" });
+    doc.text("Discounts Applied:", 123, finalY + 22.5);
+    doc.text(`-₹${sale.discountAmount.toFixed(2)}`, 193, finalY + 22.5, { align: "right" });
     doc.setTextColor(51, 65, 85);
   }
 
   // Grand Total Highlight Banner
   doc.setFillColor(15, 23, 42); // dark navy
-  doc.roundedRect(121, finalY + 23, 74, 11, 2, 2, "F");
+  doc.roundedRect(121, finalY + 28, 74, 13, 2, 2, "F");
   doc.setFont("Helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(8);
+  doc.setTextColor(203, 213, 225);
+  doc.text("NET PAYABLE:", 124, finalY + 34);
+
+  doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
-  doc.text("NET PAYABLE:", 124, finalY + 30);
-  doc.text(`₹${sale.totalAmount.toFixed(2)}`, 193, finalY + 30, { align: "right" });
+  doc.text(`₹${sale.totalAmount.toFixed(2)}`, 192, finalY + 37.5, { align: "right" });
 
   // 7. Signature & Certification Footer
-  const footerY = Math.max(finalY + 44, 255);
+  const footerY = Math.max(finalY + panelHeight + 6, 258);
 
   doc.setDrawColor(203, 213, 225);
   doc.line(margin, footerY, pageWidth - margin, footerY);
 
   doc.setFont("Helvetica", "normal");
-  doc.setFontSize(7.5);
+  doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
   doc.text("Thank you for your business! Goods once sold are covered under retailer warranty terms.", margin, footerY + 5);
-  doc.text("This is an authenticated computer-generated GST Tax Invoice.", margin, footerY + 9);
+  doc.text("This is an authenticated computer-generated GST Tax Invoice. No signature required.", margin, footerY + 9);
 
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(15, 23, 42);
-  doc.text(`For ${shop.shopName || "RetailFlow Mart"}`, 150, footerY + 14, { align: "center" });
+  doc.text(`For ${shop.shopName || "RetailFlow Mart"}`, 160, footerY + 12, { align: "center" });
   doc.setFont("Helvetica", "normal");
-  doc.setFontSize(7);
-  doc.text("Authorized Signatory / Cashier Stamp", 150, footerY + 22, { align: "center" });
+  doc.setFontSize(6.5);
+  doc.text("Authorized Signatory / Cashier Stamp", 160, footerY + 20, { align: "center" });
 
   doc.save(`Tax_Invoice_${sale.invoiceNumber}.pdf`);
 };

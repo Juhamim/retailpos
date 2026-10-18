@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { tauriStorage } from "@/lib/tauri-storage";
-import type { AppSettings, ShopSettings, TaxSettings, POSSettings, BackupSettings, CloudflareSettings } from "@retailflow/shared-types";
+import type { AppSettings, ShopSettings, TaxSettings, POSSettings, BackupSettings, CloudflareSettings, GoogleSheetsSettings } from "@retailflow/shared-types";
 import { GSTRate, InvoiceFormat } from "@retailflow/shared-types";
 
 interface SettingsState {
@@ -11,6 +11,7 @@ interface SettingsState {
   updatePOSSettings: (pos: Partial<POSSettings>) => void;
   updateBackupSettings: (backup: Partial<BackupSettings>) => void;
   updateCloudflareSettings: (cf: Partial<CloudflareSettings>) => void;
+  updateGoogleSheetsSettings: (gs: Partial<GoogleSheetsSettings>) => void;
   setTheme: (theme: "light" | "dark" | "system") => void;
 }
 
@@ -60,6 +61,16 @@ const DEFAULT_SETTINGS: AppSettings = {
     autoSync: true,
     syncIntervalSeconds: 30,
     autoCloudBackup: true,
+  },
+  googleSheets: {
+    enabled: false,
+    webhookUrl: "",
+    spreadsheetUrl: "",
+    autoSyncSales: true,
+    autoSyncInventory: true,
+    autoSyncShifts: true,
+    lastSyncedAt: undefined,
+    pendingCount: 0,
   },
   theme: "light",
   updatedAt: new Date().toISOString(),
@@ -120,6 +131,26 @@ export const useSettingsStore = create<SettingsState>()(
                 autoCloudBackup: true,
               }),
               ...cfUpdates,
+            },
+            updatedAt: new Date().toISOString(),
+          },
+        })),
+
+      updateGoogleSheetsSettings: (gsUpdates) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            googleSheets: {
+              ...(state.settings.googleSheets || {
+                enabled: false,
+                webhookUrl: "",
+                spreadsheetUrl: "",
+                autoSyncSales: true,
+                autoSyncInventory: true,
+                autoSyncShifts: true,
+                pendingCount: 0,
+              }),
+              ...gsUpdates,
             },
             updatedAt: new Date().toISOString(),
           },

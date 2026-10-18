@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { tauriStorage } from "@/lib/tauri-storage";
 import { PaymentMethod } from "@retailflow/shared-types";
+import { googleSheetsSyncService } from "@/lib/google-sheets-sync";
 
 export interface Shift {
   id: string;
@@ -80,6 +81,13 @@ export const useShiftStore = create<ShiftState>()(
           shifts: [closedShift, ...state.shifts],
           activeShift: null,
         }));
+
+        // Automatically sync closed shift to dynamic Google Sheets
+        try {
+          googleSheetsSyncService.syncShift(closedShift).catch(() => {});
+        } catch {
+          // Non-blocking
+        }
       },
 
       addSaleToShift: (amount, paymentMethods) => {
