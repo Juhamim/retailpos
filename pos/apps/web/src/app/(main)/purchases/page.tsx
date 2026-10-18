@@ -511,24 +511,24 @@ export default function PurchasesPage() {
             <form onSubmit={handleCreateBill} className="space-y-4 flex-grow">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700 block">Supplier Invoice / Bill # *</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Supplier Invoice / Bill # *</label>
                   <input
                     type="text"
                     required
                     value={invoiceNumber}
                     onChange={(e) => setInvoiceNumber(e.target.value)}
                     placeholder="e.g. INV-9942 / GST-2026-08"
-                    className="w-full h-10 px-3.5 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-mono bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700 block">Select Primary Supplier / Vendor *</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Select Primary Supplier / Vendor *</label>
                   <select
                     required
                     value={selectedSupplierId}
                     onChange={(e) => setSelectedSupplierId(e.target.value)}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-xl text-sm bg-white font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   >
                     <option value="">-- Choose Supplier --</option>
                     {suppliers.map((s) => (
@@ -542,19 +542,19 @@ export default function PurchasesPage() {
 
               {/* Active Supplier Preview Bar */}
               {activeSupplier && (
-                <div className="p-3.5 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="p-3.5 bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-2">
-                    <Truck className="h-4 w-4 text-indigo-600" />
-                    <span className="font-bold text-indigo-950">{activeSupplier.name}</span>
+                    <Truck className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <span className="font-bold text-indigo-950 dark:text-indigo-200">{activeSupplier.name}</span>
                     {activeSupplier.gstNumber && (
-                      <span className="font-mono text-[10px] bg-white px-1.5 py-0.5 rounded border border-indigo-200 text-indigo-800">
+                      <span className="font-mono text-[10px] bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 text-indigo-800 dark:text-indigo-300">
                         GST: {activeSupplier.gstNumber}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 text-slate-600 text-[11px]">
+                  <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400 text-[11px]">
                     {activeSupplier.phone && <span>📞 {activeSupplier.phone}</span>}
-                    <span className="bg-white px-2 py-0.5 rounded-full border text-indigo-700 font-bold">
+                    <span className="bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 font-bold">
                       {products.filter((p) => p.supplierId === activeSupplier.id).length} mapped products
                     </span>
                   </div>
@@ -562,15 +562,15 @@ export default function PurchasesPage() {
               )}
 
               {/* Item Adder Panel */}
-              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
+              <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <Package className="h-3.5 w-3.5 text-indigo-600" /> Add Product Line to Bill
+                  <p className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Package className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" /> Add Product Line to Bill
                   </p>
 
                   <div className="flex items-center gap-3">
                     {selectedSupplierId && (
-                      <label className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-700 cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-700 dark:text-indigo-400 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={onlySupplierProducts}
@@ -584,7 +584,7 @@ export default function PurchasesPage() {
                     <button
                       type="button"
                       onClick={() => setShowQuickAddProduct(!showQuickAddProduct)}
-                      className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg border border-blue-200 shadow-2xs"
+                      className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800 shadow-2xs"
                     >
                       <Plus className="h-3 w-3" /> Quick Add New Product
                     </button>
@@ -593,9 +593,9 @@ export default function PurchasesPage() {
 
                 {/* Quick Add Product Inline Drawer */}
                 {showQuickAddProduct && (
-                  <div className="p-4 bg-white border border-blue-200 rounded-xl space-y-3 animate-in fade-in">
-                    <p className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5 text-blue-600" /> Create & Map New Product to {activeSupplier?.name || "Supplier"}
+                  <div className="p-4 bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-xl space-y-3 animate-in fade-in">
+                    <p className="text-xs font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" /> Create & Map New Product to {activeSupplier?.name || "Supplier"}
                     </p>
 
                     <div className="grid grid-cols-3 gap-3">
@@ -604,21 +604,21 @@ export default function PurchasesPage() {
                         placeholder="Product Name *"
                         value={newProdName}
                         onChange={(e) => setNewProdName(e.target.value)}
-                        className="h-8 px-2.5 border rounded-lg text-xs"
+                        className="h-9 px-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-lg text-xs"
                       />
                       <input
                         type="text"
                         placeholder="SKU (e.g. TEA-101)"
                         value={newProdSku}
                         onChange={(e) => setNewProdSku(e.target.value)}
-                        className="h-8 px-2.5 border rounded-lg text-xs font-mono"
+                        className="h-9 px-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-lg text-xs font-mono"
                       />
                       <input
                         type="text"
                         placeholder="Category (e.g. Grocery)"
                         value={newProdCategory}
                         onChange={(e) => setNewProdCategory(e.target.value)}
-                        className="h-8 px-2.5 border rounded-lg text-xs"
+                        className="h-9 px-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-lg text-xs"
                       />
                     </div>
 
@@ -628,19 +628,19 @@ export default function PurchasesPage() {
                         placeholder="Purchase Cost (₹) *"
                         value={newProdCost}
                         onChange={(e) => setNewProdCost(e.target.value)}
-                        className="h-8 px-2.5 border rounded-lg text-xs font-bold"
+                        className="h-9 px-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-lg text-xs font-bold"
                       />
                       <input
                         type="number"
                         placeholder="Selling Price (₹) *"
                         value={newProdPrice}
                         onChange={(e) => setNewProdPrice(e.target.value)}
-                        className="h-8 px-2.5 border rounded-lg text-xs font-bold"
+                        className="h-9 px-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-lg text-xs font-bold"
                       />
                       <select
                         value={newProdGst}
                         onChange={(e) => setNewProdGst(e.target.value as GSTRate)}
-                        className="h-8 px-2 border rounded-lg text-xs bg-white"
+                        className="h-9 px-2 border border-slate-200 dark:border-slate-800 rounded-lg text-xs bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100"
                       >
                         <option value={GSTRate.ZERO}>0% GST</option>
                         <option value={GSTRate.FIVE}>5% GST</option>
@@ -654,14 +654,14 @@ export default function PurchasesPage() {
                       <button
                         type="button"
                         onClick={() => setShowQuickAddProduct(false)}
-                        className="px-3 py-1 border rounded-lg text-xs font-medium text-gray-500"
+                        className="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                       >
                         Cancel
                       </button>
                       <button
                         type="button"
                         onClick={handleQuickCreateProduct}
-                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs"
+                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs"
                       >
                         Create & Select
                       </button>
@@ -671,11 +671,11 @@ export default function PurchasesPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-600">Choose Product</label>
+                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Choose Product</label>
                     <select
                       value={selectedProductId}
                       onChange={(e) => handleProductSelectChange(e.target.value)}
-                      className="w-full h-9 px-2.5 border border-gray-200 rounded-xl text-xs bg-white font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full h-10 px-2.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     >
                       <option value="">-- Select Product --</option>
                       {availableProducts.map((p) => (
@@ -686,24 +686,24 @@ export default function PurchasesPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-600">Quantity (pcs/units)</label>
+                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Quantity (pcs/units)</label>
                     <input
                       type="number"
                       min={1}
                       value={itemQty}
                       onChange={(e) => setItemQty(parseInt(e.target.value) || 1)}
-                      className="w-full h-9 px-3 border border-gray-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-600">Purchase Price / Cost (₹)</label>
+                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Purchase Price / Cost (₹)</label>
                     <input
                       type="number"
                       min={0}
                       step="0.01"
                       value={itemCost}
                       onChange={(e) => setItemCost(parseFloat(e.target.value) || 0)}
-                      className="w-full h-9 px-3 border border-gray-200 rounded-xl text-xs font-bold font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold font-mono bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -711,7 +711,7 @@ export default function PurchasesPage() {
                 <button
                   type="button"
                   onClick={handleAddItemToBill}
-                  className="h-8 px-4 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
+                  className="h-9 px-4 bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
                 >
                   + Add Line Item
                 </button>

@@ -209,8 +209,9 @@ fn get_local_ip_addresses() -> Result<Vec<String>, String> {
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            let window = app.get_window("main").unwrap();
-            window.set_title("RetailFlow POS").ok();
+            if let Some(window) = app.get_window("main") {
+                window.set_title("RetailFlow POS").ok();
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

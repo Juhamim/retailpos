@@ -43,52 +43,55 @@ export function CustomerSelect({ selectedId, onSelect, onClose }: CustomerSelect
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">
-            {isAdding ? "Add New Customer" : "Select Customer"}
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
+          <h2 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+            {isAdding ? "Add New Customer" : "Select Customer Profile"}
           </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {!isAdding ? (
           <>
-            <div className="p-4 border-b flex gap-2">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex gap-2 bg-white dark:bg-slate-900">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search by name or phone..."
-                  className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-10 pl-10 pr-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   autoFocus
                 />
               </div>
               <button
                 onClick={() => setIsAdding(true)}
-                className="h-10 px-3.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0"
+                className="h-10 px-3.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-100 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0"
               >
                 <Plus className="h-4 w-4" />
                 New
               </button>
             </div>
 
-            <div className="max-h-80 overflow-auto divide-y divide-gray-100">
+            <div className="max-h-80 overflow-auto divide-y divide-slate-100 dark:divide-slate-800/60">
               {/* Walk-in option */}
               <button
                 onClick={() => onSelect("", "Walk-in Customer")}
-                className="w-full p-3.5 text-left hover:bg-gray-50 transition-colors flex items-center gap-3"
+                className="w-full p-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-center gap-3"
               >
-                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
                   <UserPlus className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm text-gray-900">Walk-in Customer</p>
-                  <p className="text-xs text-gray-400">Default generic customer</p>
+                  <p className="font-bold text-sm text-slate-900 dark:text-slate-100">Walk-in Customer</p>
+                  <p className="text-xs text-slate-400">Default generic customer</p>
                 </div>
               </button>
 
@@ -96,32 +99,32 @@ export function CustomerSelect({ selectedId, onSelect, onClose }: CustomerSelect
                 <button
                   key={customer.id}
                   onClick={() => onSelect(customer.id, customer.name)}
-                  className={`w-full p-3.5 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 ${
-                    selectedId === customer.id ? "bg-blue-50/70" : ""
+                  className={`w-full p-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-center gap-3 ${
+                    selectedId === customer.id ? "bg-indigo-50/70 dark:bg-indigo-950/40" : ""
                   }`}
                 >
-                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                  <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs border border-indigo-200 dark:border-indigo-800">
                     {customer.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-gray-900 truncate">{customer.name}</p>
-                    <p className="text-xs text-gray-400">{customer.phone || "No phone"}</p>
+                    <p className="font-bold text-sm text-slate-900 dark:text-slate-100 truncate">{customer.name}</p>
+                    <p className="text-xs text-slate-400">{customer.phone || "No phone"}</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900 px-2 py-0.5 rounded-full">
                       {customer.loyaltyPoints} pts
                     </span>
-                    <p className="text-[11px] text-gray-400 mt-0.5">₹{customer.totalSpent.toLocaleString()}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">₹{customer.totalSpent.toLocaleString()}</p>
                   </div>
                 </button>
               ))}
 
               {filtered.length === 0 && (
-                <div className="p-6 text-center text-gray-400">
+                <div className="p-6 text-center text-slate-400">
                   <p className="text-sm">No customers found</p>
                   <button
                     onClick={() => setIsAdding(true)}
-                    className="mt-2 text-xs font-semibold text-blue-600 hover:underline"
+                    className="mt-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                   >
                     + Register "{search}" as customer
                   </button>
@@ -132,57 +135,57 @@ export function CustomerSelect({ selectedId, onSelect, onClose }: CustomerSelect
         ) : (
           <form onSubmit={handleCreateCustomer} className="p-5 space-y-4">
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Full Name *</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 block">Full Name *</label>
               <input
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="e.g. Ramesh Patel"
                 required
-                className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full h-11 px-3.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 autoFocus
               />
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Phone Number</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 block">Phone Number</label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                 <input
                   type="tel"
                   value={newPhone}
                   onChange={(e) => setNewPhone(e.target.value)}
                   placeholder="9876543210"
-                  className="w-full h-10 pl-10 pr-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-11 pl-10 pr-3.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-700 mb-1 block">Email (Optional)</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 block">Email (Optional)</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                 <input
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="customer@example.com"
-                  className="w-full h-10 pl-10 pr-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-11 pl-10 pr-3.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
 
-            <div className="flex gap-2 pt-3 border-t">
+            <div className="flex gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="flex-1 h-10 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="flex-1 h-11 border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
                 Back
               </button>
               <button
                 type="submit"
-                className="flex-1 h-10 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+                className="flex-1 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs"
               >
                 Save & Select
               </button>

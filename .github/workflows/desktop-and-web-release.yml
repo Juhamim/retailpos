@@ -1,0 +1,102 @@
+name: RetailFlow Automated Continuous Release & Updates
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release Version (e.g. 1.1.0)'
+        required: true
+        default: '1.1.0'
+
+jobs:
+  build-and-publish:
+    name: Build & Publish EXE & Web Updates
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm Package Manager
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Rust Toolchain for Tauri
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache pnpm & Cargo Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            pos/apps/desktop/src-tauri/target/
+          key: ${{ runner.os }}-build-cache-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-build-cache-
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Shared Packages
+        run: |
+          pnpm --filter @retailflow/shared-types build
+          pnpm --filter @retailflow/validation build
+          pnpm --filter @retailflow/database build
+          pnpm --filter @retailflow/business-core build
+          pnpm --filter @retailflow/ui build
+          pnpm --filter @retailflow/sync-engine build
+
+      - name: Export Web Application Static Bundle
+        run: pnpm --filter @retailflow/web build:export
+        env:
+          NEXT_PUBLIC_APP_VERSION: ${{ github.ref_name || inputs.version || '1.1.0' }}
+          NEXT_PUBLIC_BUILD_TIME: ${{ steps.build_time.outputs.now }}
+
+      - name: Build Tauri Desktop Executable and Sign Release Update Packages
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+        with:
+          projectPath: pos/apps/desktop
+          tagName: ${{ github.ref_name || format('v{0}', inputs.version) }}
+          releaseName: 'RetailFlow POS ${{ github.ref_name || format('v{0}', inputs.version) }}'
+          releaseBody: |
+            🚀 **RetailFlow POS Centralised Release**
+            - Automated Continuous Update for Windows Desktop (.msi / .exe)
+            - Real-time Cloudflare D1 Central Database Synchronization
+            - Dynamic UPI QR Payments & Multi-Terminal Khata Balance Sync
+            - Offline-first resilience & automatic conflict resolution
+          releaseDraft: false
+          prerelease: false
+
+      - name: Deploy Web to Cloudflare Pages (Continuous Web Updates)
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        uses: cloudflare/pages-action@v1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: 'retailflow-pos-web'
+          directory: 'pos/apps/web/out'

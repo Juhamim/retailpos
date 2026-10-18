@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CartItem } from "@retailflow/shared-types";
 import { 
   X, 
@@ -20,6 +20,7 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { useAppStore } from "@/stores/app-store";
 import { useCustomerStore } from "@/stores/customer-store";
 import { exportTaxInvoicePDF } from "@/lib/pdf-export";
+import { generateUpiQrDataUrl, generateThermalUpiQr, generateUpiPaymentUrl } from "@/lib/upi-qr";
 
 interface ReceiptDialogProps {
   invoiceNumber: string;
@@ -48,6 +49,26 @@ export function ReceiptDialog({
   const [format, setFormat] = useState<"invoice" | "thermal">("invoice");
   const [phone, setPhone] = useState(customerObj?.phone || "");
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
+  const [dynamicUpiQr, setDynamicUpiQr] = useState<string>("");
+  const [thermalUpiQr, setThermalUpiQr] = useState<string>("");
+
+  useEffect(() => {
+    if (shop.upiId && total > 0) {
+      generateUpiQrDataUrl({
+        upiId: shop.upiId,
+        payeeName: shop.shopName,
+        amount: total,
+        invoiceNumber,
+      }).then(setDynamicUpiQr);
+
+      generateThermalUpiQr({
+        upiId: shop.upiId,
+        payeeName: shop.shopName,
+        amount: total,
+        invoiceNumber,
+      }).then(setThermalUpiQr);
+    }
+  }, [shop.upiId, shop.shopName, total, invoiceNumber]);
 
   const now = new Date();
   
@@ -87,7 +108,20 @@ export function ReceiptDialog({
     const cleanPhone = targetPhone.replace(/[^0-9]/g, "");
     if (!cleanPhone) return;
     const itemsText = items.map((item) => `- ${item.productName} (x${item.quantity}): ₹${item.totalAmount.toFixed(2)}`).join("\n");
-    const msg = `*TAX INVOICE FROM ${shop.shopName}*\n------------------------------\nInvoice No: ${invoiceNumber}\nDate: ${now.toLocaleDateString("en-IN")}\nCustomer: ${customerName || "Walk-in"}\nTotal Amount: ₹${total.toFixed(2)}\nItems:\n${itemsText}\n------------------------------\nThank you for shopping with us!`;
+    
+    const upiPayUrl = shop.upiId ? generateUpiPaymentUrl({
+      upiId: shop.upiId,
+      payeeName: shop.shopName,
+      amount: total,
+      invoiceNumber,
+    }) : "";
+
+    let msg = `*TAX INVOICE FROM ${shop.shopName}*\n------------------------------\nInvoice No: ${invoiceNumber}\nDate: ${now.toLocaleDateString("en-IN")}\nCustomer: ${customerName || "Walk-in"}\nTotal Amount: ₹${total.toFixed(2)}\nItems:\n${itemsText}\n------------------------------\n`;
+    if (upiPayUrl) {
+      msg += `💳 Pay Instantly via UPI (GPay/PhonePe):\n${upiPayUrl}\n------------------------------\n`;
+    }
+    msg += `Thank you for shopping with us!`;
+
     const url = `https://wa.me/${cleanPhone.startsWith("91") ? cleanPhone : "91" + cleanPhone}?text=${encodeURIComponent(msg)}`;
     window.open(url, "_blank");
     setShowPhonePrompt(false);
@@ -211,13 +245,24 @@ export function ReceiptDialog({
               {/* Header: Company Details & Invoice Badge */}
               <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-slate-200 pb-6">
                 <div className="space-y-1.5 max-w-md">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-extrabold text-base">
-                      R
+                  <div className="flex items-center gap-3">
+                    {shop.logo ? (
+                      <img
+                        src={shop.logo}
+                        alt={shop.shopName}
+                        className="h-12 max-w-[160px] object-contain rounded"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-extrabold text-base shadow-xs">
+                        {shop.shopName?.[0] || "R"}
+                      </div>
+                    )}
+                    <div>
+                      <h1 className="text-xl font-black tracking-tight text-slate-900 uppercase">
+                        {shop.shopName || "RetailFlow Mart"}
+                      </h1>
+                      <p className="text-[11px] text-slate-500 font-semibold">Authorized Retailer & Tax Invoicing</p>
                     </div>
-                    <h1 className="text-xl font-black tracking-tight text-slate-900 uppercase">
-                      {shop.shopName || "RetailFlow Mart"}
-                    </h1>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed">{shop.address}</p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
@@ -398,16 +443,37 @@ export function ReceiptDialog({
                 </div>
               </div>
 
-              {/* Terms & Signature Section */}
+              {/* Terms, Dynamic UPI QR & Signature Section */}
               <div className="border-t border-slate-200 pt-6 flex flex-col sm:flex-row justify-between items-end gap-6 text-xs text-slate-500">
-                <div className="space-y-1">
-                  <p className="font-bold text-slate-800">Terms & Conditions:</p>
-                  <p>1. Goods once sold are covered under manufacturer warranty.</p>
-                  <p>2. Please retain this original tax invoice for any warranty or exchange requests.</p>
-                  <p className="text-[11px] text-slate-400 pt-1">This is an authentic computer-generated GST tax invoice.</p>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="font-bold text-slate-800">Terms & Conditions:</p>
+                    <p>1. Goods once sold are covered under manufacturer warranty.</p>
+                    <p>2. Please retain this original tax invoice for any warranty or exchange requests.</p>
+                    <p className="text-[11px] text-slate-400 pt-1">This is an authentic computer-generated GST tax invoice.</p>
+                  </div>
+
+                  {/* A4 Dynamic UPI QR Box */}
+                  {shop.upiId && dynamicUpiQr && (
+                    <div className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                      <img
+                        src={dynamicUpiQr}
+                        alt="Scan to Pay via UPI"
+                        className="w-16 h-16 object-contain rounded border bg-white p-0.5 shrink-0"
+                      />
+                      <div className="text-[10px] text-slate-600">
+                        <p className="font-extrabold text-slate-900 flex items-center gap-1">
+                          <Smartphone className="h-3 w-3 text-indigo-600" /> Pay via UPI QR
+                        </p>
+                        <p className="font-mono text-slate-800 font-bold">{shop.upiId}</p>
+                        <p className="text-[9px] text-slate-500">GPay • PhonePe • Paytm • BHIM</p>
+                        <p className="text-emerald-700 font-bold text-[10px]">Exact Bill: ₹{total.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="text-center sm:text-right space-y-1 self-center sm:self-end">
+                <div className="text-center sm:text-right space-y-1 self-center sm:self-end shrink-0">
                   <div className="h-10 border-b border-dashed border-slate-300 min-w-[160px]" />
                   <p className="font-bold text-slate-800 text-xs mt-1">For {shop.shopName || "RetailFlow Mart"}</p>
                   <p className="text-[10px] text-slate-400">Authorized Signatory / Cashier Stamp</p>
@@ -422,6 +488,15 @@ export function ReceiptDialog({
             >
               {/* Header */}
               <div className="text-center space-y-0.5">
+                {shop.logo && (
+                  <div className="mb-2">
+                    <img
+                      src={shop.logo}
+                      alt={shop.shopName}
+                      className="h-10 max-w-[120px] object-contain mx-auto"
+                    />
+                  </div>
+                )}
                 <h3 className="font-bold text-sm tracking-tight text-gray-900 font-sans uppercase">
                   {shop.shopName}
                 </h3>
@@ -498,6 +573,18 @@ export function ReceiptDialog({
                   <span>₹{total.toFixed(2)}</span>
                 </div>
               </div>
+
+              {/* Dynamic UPI QR on Thermal Slip */}
+              {shop.upiId && thermalUpiQr && (
+                <div className="text-center pt-2 border-t border-dashed border-gray-300 space-y-1">
+                  <p className="font-bold text-[10px] text-gray-800 uppercase tracking-wider">Scan & Pay via UPI</p>
+                  <div className="p-1 bg-white border border-gray-300 inline-block rounded">
+                    <img src={thermalUpiQr} alt="UPI QR" className="w-24 h-24 object-contain mx-auto" />
+                  </div>
+                  <p className="text-[9px] text-gray-600 font-mono font-semibold">{shop.upiId}</p>
+                  <p className="text-[9px] font-bold text-gray-800">Bill Payable: ₹{total.toFixed(2)}</p>
+                </div>
+              )}
 
               {/* Footer */}
               <div className="text-center pt-3 border-t border-dashed border-gray-300 text-[10px] text-gray-500 space-y-0.5 font-sans">

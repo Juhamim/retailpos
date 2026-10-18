@@ -1,0 +1,14 @@
+{
+  "version": "1.1.0",
+  "buildTime": "2026-10-18T12:00:00Z",
+  "commitSha": "v1.1.0-rel",
+  "channel": "stable",
+  "releaseNotes": "Continuous auto-updates, Cloudflare D1 central database sync, Dynamic UPI QR payment engine, and high-contrast typography fixes.",
+  "features": [
+    "Offline-first Hybrid Cloudflare D1 Central Database",
+    "Customer Self-Service Cloudflare Setup Wizard",
+    "Dynamic NPCI UPI QR code on checkout & receipts",
+    "Instant multi-counter inventory & Khata balance synchronization",
+    "Automated Windows EXE & Web zero-downtime updates"
+  ]
+}

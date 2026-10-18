@@ -47,6 +47,17 @@ export interface BackupSettings {
   customBackupDirectory?: string;
 }
 
+export interface CloudflareSettings {
+  workerUrl: string;
+  apiToken: string;
+  storeId: string;
+  autoSync: boolean;
+  syncIntervalSeconds: number;
+  autoCloudBackup: boolean;
+  lastSyncedAt?: string;
+  lastBackupAt?: string;
+}
+
 export interface AppSettings {
   id: string;
   isSetupCompleted?: boolean;
@@ -54,6 +65,8 @@ export interface AppSettings {
   tax: TaxSettings;
   pos: POSSettings;
   backup: BackupSettings;
+  cloudflare?: CloudflareSettings;
   theme: "light" | "dark" | "system";
   updatedAt: string;
 }
+

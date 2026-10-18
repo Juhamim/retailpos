@@ -6,3 +6,5 @@ allowBuilds:
   better-sqlite3: true
   core-js: true
   esbuild: true
+  sharp: set this to true or false
+  workerd: set this to true or false

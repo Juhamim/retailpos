@@ -10,6 +10,9 @@ import { CommandPalette } from "@/components/command-palette";
 import { PinLockScreen } from "@/components/auth/pin-lock-screen";
 import { StoreSetupWizard } from "@/components/onboarding/store-setup-wizard";
 import { useRouter } from "next/navigation";
+import { cloudflareSyncService } from "@/lib/cloudflare-sync-service";
+
+import { WebUpdateBanner } from "@/components/common/web-update-banner";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const setIsOnline = useAppStore((s) => s.setIsOnline);
@@ -37,13 +40,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useKeyboardShortcuts();
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
+    const handleOnline = () => {
+      setIsOnline(true);
+      cloudflareSyncService.syncCycle().catch(() => {});
+    };
     const handleOffline = () => setIsOnline(false);
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
+
+    // Start background sync every 30s
+    cloudflareSyncService.start(30000);
+
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
+      cloudflareSyncService.stop();
     };
   }, [setIsOnline]);
 
@@ -68,7 +79,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto bg-[#f8fafc]">
+        <main className="flex-1 overflow-y-auto bg-[#f8fafc] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors">
           {children}
         </main>
       </div>
@@ -76,6 +87,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Global Overlays */}
       <CommandPalette />
       <PinLockScreen />
+      <WebUpdateBanner />
       {showSetupWizard && (
         <StoreSetupWizard onComplete={() => setShowSetupWizard(false)} />
       )}

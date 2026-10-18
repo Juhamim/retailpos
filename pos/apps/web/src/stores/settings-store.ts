@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { tauriStorage } from "@/lib/tauri-storage";
-import type { AppSettings, ShopSettings, TaxSettings, POSSettings, BackupSettings } from "@retailflow/shared-types";
+import type { AppSettings, ShopSettings, TaxSettings, POSSettings, BackupSettings, CloudflareSettings } from "@retailflow/shared-types";
 import { GSTRate, InvoiceFormat } from "@retailflow/shared-types";
 
 interface SettingsState {
@@ -10,6 +10,7 @@ interface SettingsState {
   updateTaxSettings: (tax: Partial<TaxSettings>) => void;
   updatePOSSettings: (pos: Partial<POSSettings>) => void;
   updateBackupSettings: (backup: Partial<BackupSettings>) => void;
+  updateCloudflareSettings: (cf: Partial<CloudflareSettings>) => void;
   setTheme: (theme: "light" | "dark" | "system") => void;
 }
 
@@ -17,12 +18,15 @@ const DEFAULT_SETTINGS: AppSettings = {
   id: "app-settings-default",
   shop: {
     shopName: "RetailFlow Mart - Kerala",
+    logo: "",
     address: "Shop #14, Ground Floor, Central Plaza, MG Road, Kochi, Kerala 682001",
     phone: "+91 98765 43210",
     email: "contact@retailflowmart.in",
     gstNumber: "32ABCDE1234F1Z5",
     currency: "INR",
     currencySymbol: "₹",
+    upiId: "retailflow@okaxis",
+    placeOfSupply: "32-Kerala",
   },
   tax: {
     defaultGstRate: GSTRate.EIGHTEEN,
@@ -41,12 +45,21 @@ const DEFAULT_SETTINGS: AppSettings = {
     autoAddBarcode: true,
     holdSaleOnBackspace: false,
     showProductImages: true,
+    showLogoOnReceipt: true,
   },
   backup: {
     autoBackup: true,
     backupIntervalMinutes: 60,
     retentionDays: 30,
     customBackupDirectory: "",
+  },
+  cloudflare: {
+    workerUrl: "",
+    apiToken: "",
+    storeId: "store-kerala-01",
+    autoSync: true,
+    syncIntervalSeconds: 30,
+    autoCloudBackup: true,
   },
   theme: "light",
   updatedAt: new Date().toISOString(),
@@ -89,6 +102,25 @@ export const useSettingsStore = create<SettingsState>()(
           settings: {
             ...state.settings,
             backup: { ...state.settings.backup, ...backupUpdates },
+            updatedAt: new Date().toISOString(),
+          },
+        })),
+
+      updateCloudflareSettings: (cfUpdates) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            cloudflare: {
+              ...(state.settings.cloudflare || {
+                workerUrl: "",
+                apiToken: "",
+                storeId: "store-kerala-01",
+                autoSync: true,
+                syncIntervalSeconds: 30,
+                autoCloudBackup: true,
+              }),
+              ...cfUpdates,
+            },
             updatedAt: new Date().toISOString(),
           },
         })),

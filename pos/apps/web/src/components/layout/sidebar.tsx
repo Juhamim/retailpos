@@ -23,12 +23,14 @@ import {
   Wallet
 } from "lucide-react";
 import { useAppStore } from "@/stores/app-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { UserRole } from "@retailflow/shared-types";
 
 export default function Sidebar() {
   const collapsed = useAppStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const currentUser = useAppStore((s) => s.currentUser);
+  const shop = useSettingsStore((s) => s.settings.shop);
   const pathname = usePathname();
 
   const userRole = currentUser?.role || UserRole.CASHIER;
@@ -67,15 +69,43 @@ export default function Sidebar() {
       className="flex flex-col h-full bg-slate-900 dark:bg-slate-950 text-white transition-all duration-300 ease-in-out shrink-0 border-r border-slate-800 shadow-xl"
       style={{ width: collapsed ? 72 : 260 }}
     >
-      <div className="flex items-center justify-between px-4 py-5 border-b border-slate-800/50">
-        {!collapsed && (
-          <span className="text-sm font-extrabold tracking-widest uppercase bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent pl-2">
-            Retail Terminal
-          </span>
+      <div className="flex items-center justify-between px-3.5 py-4 border-b border-slate-800/60">
+        {!collapsed ? (
+          <div className="flex items-center gap-2.5 overflow-hidden pl-1">
+            {shop.logo ? (
+              <img
+                src={shop.logo}
+                alt={shop.shopName}
+                className="h-8 max-w-[120px] object-contain rounded shrink-0 bg-white/5 p-0.5"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-extrabold text-sm shadow-md shrink-0">
+                {shop.shopName?.[0] || "R"}
+              </div>
+            )}
+            <div className="truncate">
+              <p className="text-xs font-black tracking-tight text-white truncate max-w-[140px]">
+                {shop.shopName || "RetailFlow"}
+              </p>
+              <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">
+                Retail Terminal
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="mx-auto">
+            {shop.logo ? (
+              <img src={shop.logo} alt="Logo" className="w-8 h-8 object-contain rounded" />
+            ) : (
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center font-extrabold text-sm">
+                {shop.shopName?.[0] || "R"}
+              </div>
+            )}
+          </div>
         )}
         <button
           onClick={toggleSidebar}
-          className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-all duration-200 ml-auto"
+          className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-all duration-200 ml-auto"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}

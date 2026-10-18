@@ -2,7 +2,7 @@
   "build": {
     "beforeDevCommand": "pnpm --filter @retailflow/web dev",
     "devPath": "http://localhost:3000",
-    "beforeBuildCommand": "pnpm --filter @retailflow/web build:export",
+    "beforeBuildCommand": "",
     "distDir": "../../web/out",
     "withGlobalTauri": true
   },
@@ -51,6 +51,7 @@
     },
     "windows": [
       {
+        "label": "main",
         "fullscreen": false,
         "resizable": true,
         "title": "RetailFlow POS - Modern Retail Point of Sale",
@@ -60,6 +61,14 @@
         "minHeight": 600,
         "center": true
       }
-    ]
+    ],
+    "updater": {
+      "active": true,
+      "dialog": false,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJEQ0QyNEVFOUU2N0ZGMjMKUldSNkM3NUVGZ0F0RzE4V2VNVVpYdkpvRzRzTWpQdVU3U01Odm12MmtmY2ZkVFNjVUVNVDlhR2IK",
+      "endpoints": [
+        "https://raw.githubusercontent.com/Juhamim/retailpos/main/releases/latest.json"
+      ]
+    }
   }
 }

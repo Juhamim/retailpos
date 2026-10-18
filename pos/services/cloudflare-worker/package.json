@@ -1,0 +1,17 @@
+{
+  "name": "@retailflow/cloudflare-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker Backend & Live Cloud Executive Dashboard for RetailFlow POS",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "typescript": "^5.5.0",
+    "wrangler": "^3.78.0"
+  }
+}

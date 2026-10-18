@@ -5,12 +5,13 @@ import type { ProductWithCategory } from "@retailflow/shared-types";
 import type { Shift } from "../stores/shift-store";
 import type { PurchaseRecord } from "../stores/purchase-store";
 import type { PurchaseReturnRecord } from "../stores/purchase-return-store";
+import { generatePdfUpiQr } from "./upi-qr";
 
 // Format helper
 const formatCurrency = (val: number) => `₹${val.toFixed(2)}`;
 
 // Premium A4 GST Tax Invoice PDF Export
-export const exportTaxInvoicePDF = (sale: CompletedSale, shop: any) => {
+export const exportTaxInvoicePDF = async (sale: CompletedSale, shop: any) => {
   const doc = new jsPDF({ format: "a4", unit: "mm" });
   const pageWidth = 210;
   const margin = 14;
@@ -23,20 +24,44 @@ export const exportTaxInvoicePDF = (sale: CompletedSale, shop: any) => {
   doc.rect(0, 5, pageWidth, 1.5, "F");
 
   // 2. Company Brand & Title
-  doc.setFont("Helvetica", "bold");
-  doc.setFontSize(18);
-  doc.setTextColor(15, 23, 42);
-  doc.text(shop.shopName || "RetailFlow Mart", margin, 18);
-
-  doc.setFont("Helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(71, 85, 105);
   const addressLines = [
     shop.address || "Main Street Commercial Center",
     `Phone: ${shop.phone || "N/A"}  |  Email: ${shop.email || "support@retailflow.in"}`,
     shop.gstNumber ? `GSTIN: ${shop.gstNumber}  |  State: 32-Kerala` : "State: 32-Kerala",
   ];
-  doc.text(addressLines, margin, 24);
+
+  if (shop.logo && shop.logo.startsWith("data:image")) {
+    try {
+      doc.addImage(shop.logo, "PNG", margin, 10, 24, 12, undefined, "FAST");
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(15);
+      doc.setTextColor(15, 23, 42);
+      doc.text(shop.shopName || "RetailFlow Mart", margin + 28, 16);
+
+      doc.setFont("Helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text(addressLines, margin + 28, 21);
+    } catch {
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(15, 23, 42);
+      doc.text(shop.shopName || "RetailFlow Mart", margin, 18);
+      doc.setFont("Helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text(addressLines, margin, 24);
+    }
+  } else {
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(15, 23, 42);
+    doc.text(shop.shopName || "RetailFlow Mart", margin, 18);
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(addressLines, margin, 24);
+  }
 
   // 3. Tax Invoice Header Right Badge
   doc.setFillColor(241, 245, 249); // slate-100
@@ -180,6 +205,31 @@ export const exportTaxInvoicePDF = (sale: CompletedSale, shop: any) => {
   doc.text(`State Tax (SGST Total)  : ₹${(sale.taxAmount / 2).toFixed(2)}`, margin + 3, finalY + 21);
   doc.text(`Total GST Liability     : ₹${sale.taxAmount.toFixed(2)}`, margin + 3, finalY + 26);
   doc.text(`Terms: Warranty claims valid with this original tax invoice.`, margin + 3, finalY + 32);
+
+  if (shop.upiId) {
+    try {
+      const upiQrDataUrl = await generatePdfUpiQr({
+        upiId: shop.upiId,
+        payeeName: shop.shopName,
+        amount: sale.totalAmount,
+        invoiceNumber: sale.invoiceNumber,
+      });
+      if (upiQrDataUrl) {
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(margin + 2, finalY + 34, 16, 16, 1, 1, "F");
+        doc.addImage(upiQrDataUrl, "PNG", margin + 2, finalY + 34, 16, 16, undefined, "FAST");
+        doc.setFont("Helvetica", "bold");
+        doc.setFontSize(7);
+        doc.setTextColor(15, 23, 42);
+        doc.text("SCAN TO PAY VIA UPI", margin + 20, finalY + 39);
+        doc.setFont("Helvetica", "normal");
+        doc.setFontSize(6.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text(`UPI ID: ${shop.upiId}`, margin + 20, finalY + 44);
+        doc.text(`Amount: ₹${sale.totalAmount.toFixed(2)}`, margin + 20, finalY + 48);
+      }
+    } catch {}
+  }
 
   // Right: Grand Total Box
   doc.setFillColor(241, 245, 249);

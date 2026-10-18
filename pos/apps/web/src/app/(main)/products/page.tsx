@@ -230,9 +230,9 @@ export default function ProductsPage() {
       )}
 
       {/* Filters Bar */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-2xs p-4 flex flex-wrap items-center gap-3">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs p-4 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[240px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
             value={search}
@@ -241,7 +241,7 @@ export default function ProductsPage() {
               setPage(1);
             }}
             placeholder="Search by name, SKU or barcode..."
-            className="w-full h-10 pl-10 pr-4 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full h-10 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
         <select
@@ -250,7 +250,7 @@ export default function ProductsPage() {
             setSelectedCategory(e.target.value);
             setPage(1);
           }}
-          className="h-10 px-3 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           {categoryList.map((cat) => (
             <option key={cat} value={cat}>
@@ -264,7 +264,7 @@ export default function ProductsPage() {
             setSelectedSupplier(e.target.value);
             setPage(1);
           }}
-          className="h-10 px-3 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="All">All Suppliers / Vendors</option>
           {suppliers.map((s) => (
@@ -279,7 +279,7 @@ export default function ProductsPage() {
             setSelectedStatus(e.target.value);
             setPage(1);
           }}
-          className="h-10 px-3 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="h-10 px-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="All">All Status</option>
           <option value="active">In Stock</option>
@@ -431,13 +431,13 @@ export default function ProductsPage() {
 
       {/* Edit Product Modal */}
       {editingProduct && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h2 className="font-bold text-gray-900">Edit Product</h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Quick Edit Product</h2>
               <button
                 onClick={() => setEditingProduct(null)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700"
+                className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -446,49 +446,49 @@ export default function ProductsPage() {
             <form onSubmit={handleSaveEdit} className="p-6 space-y-4 max-h-[80vh] overflow-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Product Name *</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Product Name *</label>
                   <input
                     type="text"
                     value={editForm.name || ""}
                     onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                     required
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">SKU *</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">SKU *</label>
                   <input
                     type="text"
                     value={editForm.sku || ""}
                     onChange={(e) => setEditForm({ ...editForm, sku: e.target.value })}
                     required
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-mono bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Barcode</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Barcode</label>
                   <input
                     type="text"
                     value={editForm.barcode || ""}
                     onChange={(e) => setEditForm({ ...editForm, barcode: e.target.value })}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-mono bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Category</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Category</label>
                   <input
                     type="text"
                     value={editForm.categoryName || ""}
                     onChange={(e) => setEditForm({ ...editForm, categoryName: e.target.value })}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Primary Supplier / Vendor</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Primary Supplier / Vendor</label>
                   <select
                     value={editForm.supplierId || ""}
                     onChange={(e) => {
@@ -500,7 +500,7 @@ export default function ProductsPage() {
                         supplierName: sObj?.name || undefined,
                       });
                     }}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   >
                     <option value="">-- No Supplier (Direct) --</option>
                     {suppliers.map((s) => (
@@ -512,11 +512,11 @@ export default function ProductsPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Unit</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Unit</label>
                   <select
                     value={editForm.unit || "pcs"}
                     onChange={(e) => setEditForm({ ...editForm, unit: e.target.value })}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   >
                     {["pcs", "kg", "g", "box", "bottle", "can", "pack", "L", "ml"].map((u) => (
                       <option key={u} value={u}>{u}</option>
@@ -525,34 +525,34 @@ export default function ProductsPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Purchase Cost (₹)</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Purchase Cost (₹)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={editForm.purchasePrice ?? ""}
                     onChange={(e) => setEditForm({ ...editForm, purchasePrice: Number(e.target.value) })}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Selling Price (₹) *</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Selling Price (₹) *</label>
                   <input
                     type="number"
                     step="0.01"
                     value={editForm.sellingPrice ?? ""}
                     onChange={(e) => setEditForm({ ...editForm, sellingPrice: Number(e.target.value) })}
                     required
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">GST Rate (%)</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">GST Rate (%)</label>
                   <select
                     value={editForm.gstRate || GSTRate.EIGHTEEN}
                     onChange={(e) => setEditForm({ ...editForm, gstRate: e.target.value as GSTRate })}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   >
                     <option value={GSTRate.ZERO}>0% (Exempt)</option>
                     <option value={GSTRate.FIVE}>5%</option>
@@ -563,8 +563,8 @@ export default function ProductsPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Profit Margin</label>
-                  <div className="h-10 px-3 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center font-bold text-xs text-emerald-800">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Profit Margin</label>
+                  <div className="h-10 px-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center font-bold text-xs text-emerald-800 dark:text-emerald-300">
                     {Number(editForm.sellingPrice) > 0
                       ? `${(((Number(editForm.sellingPrice) - (Number(editForm.purchasePrice) || 0)) / Number(editForm.sellingPrice)) * 100).toFixed(1)}% Margin`
                       : "0%"}
@@ -572,28 +572,28 @@ export default function ProductsPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Stock Quantity *</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Stock Quantity *</label>
                   <input
                     type="number"
                     value={editForm.stockQuantity ?? ""}
                     onChange={(e) => setEditForm({ ...editForm, stockQuantity: Number(e.target.value) })}
                     required
-                    className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t">
+              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  className="flex-1 h-10 rounded-xl border border-gray-200 text-sm font-medium hover:bg-gray-50"
+                  className="flex-1 h-11 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 h-10 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+                  className="flex-1 h-11 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm"
                 >
                   Save Changes
                 </button>

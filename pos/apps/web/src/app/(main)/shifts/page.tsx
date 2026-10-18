@@ -6,6 +6,7 @@ import { useAppStore } from "@/stores/app-store";
 import { useSalesStore } from "@/stores/sales-store";
 import { exportZReportPDF } from "@/lib/pdf-export";
 import { createDayEndBackup } from "@/lib/dayend-backup";
+import { cloudflareBackupService } from "@/lib/cloudflare-backup-service";
 import { PaymentMethod } from "@retailflow/shared-types";
 import { 
   Key, 
@@ -64,6 +65,11 @@ export default function ShiftsPage() {
       } else {
         setBackupStatus(`Day-end closed. Backup notice: ${backupRes.error}`);
       }
+
+      // 3. Automated Cloudflare cloud snapshot backup
+      cloudflareBackupService.triggerDayEndCloudBackup(shiftSnapshot.id).catch((cfErr) => {
+        console.warn("Cloudflare shift backup notice:", cfErr);
+      });
     } catch (err) {
       console.warn("Backup triggering notice:", err);
     }
@@ -167,15 +173,15 @@ export default function ShiftsPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-gray-700 mb-1 block">Opening Float (Drawer Starting Cash) *</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Opening Float (Drawer Starting Cash) *</label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">₹</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">₹</span>
                   <input
                     type="number"
                     required
                     value={openingFloat}
                     onChange={(e) => setOpeningFloat(e.target.value)}
-                    className="w-full h-11 pl-8 pr-4 border border-gray-200 rounded-xl text-lg font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-11 pl-8 pr-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl text-lg font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -251,27 +257,27 @@ export default function ShiftsPage() {
                 <h3 className="font-bold text-sm text-gray-900">Reconcile Drawer & End Day</h3>
                 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Counted Cash in Drawer (Physical Count) *</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Counted Cash in Drawer (Physical Count) *</label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">₹</span>
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">₹</span>
                     <input
                       type="number"
                       required
                       value={closingFloat}
                       onChange={(e) => setClosingFloat(e.target.value)}
-                      className="w-full h-11 pl-8 pr-4 border border-gray-200 rounded-xl text-lg font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full h-11 pl-8 pr-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl text-lg font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 mb-1 block">Drawer Reconcile Notes / Auditing Remarks</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">Drawer Reconcile Notes / Auditing Remarks</label>
                   <textarea
                     rows={2}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="e.g. UPI sales verified, cash matches drawer expected totals."
-                    className="w-full p-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full p-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
 

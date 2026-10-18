@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Lock, User, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useAppStore } from "@/stores/app-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { useStoreHydration } from "@/hooks/use-hydration";
 
 export default function LoginPage() {
@@ -117,16 +118,28 @@ export default function LoginPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mode, pin]);
 
+  const shop = useSettingsStore((s) => s.settings.shop);
+
   return (
     <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-md">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/20">
-            <span className="text-white text-3xl font-extrabold tracking-tight">R</span>
-          </div>
+          {shop.logo ? (
+            <div className="mb-3 flex justify-center">
+              <img
+                src={shop.logo}
+                alt={shop.shopName}
+                className="h-16 max-w-[200px] object-contain rounded p-1 bg-white/5 border border-white/10"
+              />
+            </div>
+          ) : (
+            <div className="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/20">
+              <span className="text-white text-3xl font-extrabold tracking-tight">R</span>
+            </div>
+          )}
           <h1 className="text-2xl font-black bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-            RetailFlow POS
+            {shop.shopName || "RetailFlow POS"}
           </h1>
           <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest font-semibold">
             Enterprise Point of Sale

@@ -1,0 +1,23 @@
+name = "retailflow-pos-cloud"
+main = "src/index.ts"
+compatibility_date = "2024-09-01"
+
+[vars]
+ENVIRONMENT = "production"
+DEFAULT_STORE_NAME = "RetailFlow Mart"
+
+# Central Cloudflare D1 Distributed SQLite Database
+[[d1_databases]]
+binding = "DB"
+database_name = "retailflow_pos_db"
+database_id = "retailflow_pos_db"
+
+# R2 Bucket for point-in-time database snapshot archives
+[[r2_buckets]]
+binding = "RETAILFLOW_R2"
+bucket_name = "retailflow-backups"
+
+# KV Namespace for lightweight snapshot metadata and live stats
+# [[kv_namespaces]]
+# binding = "RETAILFLOW_KV"
+# id = "YOUR_KV_NAMESPACE_ID"

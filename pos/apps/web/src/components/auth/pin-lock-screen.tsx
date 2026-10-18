@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/stores/app-store";
 import { useAuthStore } from "@/stores/auth-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { Lock, LogOut } from "lucide-react";
 
 export function PinLockScreen() {
@@ -10,6 +11,7 @@ export function PinLockScreen() {
   const setIsLocked = useAppStore((state) => state.setIsLocked);
   const currentUser = useAppStore((state) => state.currentUser);
   const setCurrentUser = useAppStore((state) => state.setCurrentUser);
+  const shop = useSettingsStore((state) => state.settings.shop);
   
   const { verifyPin, users } = useAuthStore();
   const [pin, setPin] = useState("");
@@ -80,10 +82,20 @@ export function PinLockScreen() {
   return (
     <div className="fixed inset-0 bg-slate-950/95 flex items-center justify-center z-50 p-4 font-sans text-white">
       <div className="w-full max-w-sm flex flex-col items-center">
-        {/* Header Icon */}
-        <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center mb-4">
-          <Lock className="h-6 w-6 text-blue-500 animate-pulse" />
-        </div>
+        {/* Header Store Logo or Lock Icon */}
+        {shop.logo ? (
+          <div className="mb-4 text-center">
+            <img
+              src={shop.logo}
+              alt={shop.shopName}
+              className="h-14 max-w-[180px] object-contain mx-auto rounded p-1 bg-white/5 border border-white/10"
+            />
+          </div>
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center mb-4">
+            <Lock className="h-6 w-6 text-blue-500 animate-pulse" />
+          </div>
+        )}
 
         <h2 className="text-lg font-black tracking-tight text-white mb-0.5">Register Locked</h2>
         {selectedSwitchUser ? (

@@ -59,6 +59,32 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  /* Universal text visibility for form inputs, textareas, and selects */
+  input,
+  textarea,
+  select {
+    color: hsl(var(--foreground));
+    caret-color: hsl(var(--primary));
+  }
+
+  /* When inside light/white containers or modals, ensure text is always dark and visible */
+  .bg-white input:not([class*="text-"]):not([class*="dark:text-"]),
+  .bg-white textarea:not([class*="text-"]):not([class*="dark:text-"]),
+  .bg-slate-50 input:not([class*="text-"]):not([class*="dark:text-"]),
+  .bg-gray-50 input:not([class*="text-"]):not([class*="dark:text-"]) {
+    color: #0f172a !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: #64748b;
+  }
 }
 
 @layer utilities {

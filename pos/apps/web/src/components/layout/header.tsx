@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Cloud, CloudOff, Sun, Moon, Lock, QrCode, Wifi } from "lucide-react";
+import { Search, Cloud, CloudOff, Sun, Moon, Lock, QrCode, Wifi, RefreshCw, Sparkles } from "lucide-react";
 import { useAppStore } from "@/stores/app-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { useShiftStore } from "@/stores/shift-store";
+import { cloudflareSyncService } from "@/lib/cloudflare-sync-service";
 import { LocalNetworkModal } from "@/components/network/local-network-modal";
+import { AutoUpdateModal } from "@/components/common/auto-update-modal";
 import Link from "next/link";
 
 export default function Header() {
@@ -14,22 +17,39 @@ export default function Header() {
   const syncStatus = useAppStore((s) => s.syncStatus);
   const currentUser = useAppStore((s) => s.currentUser);
   const setIsLocked = useAppStore((state) => state.setIsLocked);
+  const shop = useSettingsStore((s) => s.settings.shop);
   
   const activeShift = useShiftStore((s) => s.activeShift);
   const [networkModalOpen, setNetworkModalOpen] = useState(false);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [isManualSyncing, setIsManualSyncing] = useState(false);
 
   const resolvedTheme = theme === "system" ? "light" : theme;
   const initials = currentUser
     ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`
     : "AD";
 
+  const handleManualSync = async () => {
+    setIsManualSyncing(true);
+    await cloudflareSyncService.syncCycle().catch(() => {});
+    setTimeout(() => setIsManualSyncing(false), 600);
+  };
+
   return (
     <>
       <header className="h-16 flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-6 shrink-0 sticky top-0 z-50 transition-all duration-300">
-        <div className="flex items-center gap-3">
-          <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent hover:opacity-90 transition-opacity cursor-pointer">
-            RetailFlow
-          </span>
+        <div className="flex items-center gap-2.5">
+          {shop.logo ? (
+            <img
+              src={shop.logo}
+              alt={shop.shopName}
+              className="h-8 max-w-[130px] object-contain rounded"
+            />
+          ) : (
+            <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent hover:opacity-90 transition-opacity cursor-pointer">
+              {shop.shopName || "RetailFlow"}
+            </span>
+          )}
         </div>
 
         <div className="flex-grow max-w-md mx-6">
@@ -64,7 +84,7 @@ export default function Header() {
             className="p-2 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all duration-200 hover:scale-[1.05] active:scale-[0.95]"
             aria-label="Toggle theme"
           >
-            {resolvedTheme === "dark" ? <Sun size={18} className="animate-spin-slow" /> : <Moon size={18} />}
+            {resolvedTheme === "dark" ? <Sun size={18} className="animate-spin-slow text-amber-400" /> : <Moon size={18} className="text-slate-600" />}
           </button>
 
           {/* Lock Screen Button */}
@@ -78,23 +98,45 @@ export default function Header() {
             </button>
           )}
 
-          <div className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border ${
-            isOnline && syncStatus === "synced"
-              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-          }`}>
-            {isOnline && syncStatus === "synced" ? (
+          {/* Check for Updates Button */}
+          <button
+            onClick={() => setUpdateModalOpen(true)}
+            className="p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-all duration-200 hover:scale-[1.05] active:scale-[0.95]"
+            title="Check for Software Updates"
+          >
+            <Sparkles size={18} className="text-indigo-500 dark:text-indigo-400" />
+          </button>
+
+          {/* Cloudflare Sync Badge / Action Button */}
+          <button
+            onClick={handleManualSync}
+            disabled={isManualSyncing}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+              isOnline && syncStatus === "synced"
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+                : isManualSyncing || syncStatus === "syncing"
+                ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 animate-pulse"
+                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/20"
+            }`}
+            title="Click to sync with Cloudflare Worker now"
+          >
+            {isManualSyncing || syncStatus === "syncing" ? (
+              <>
+                <RefreshCw size={14} className="text-indigo-500 animate-spin" />
+                <span>Syncing...</span>
+              </>
+            ) : isOnline && syncStatus === "synced" ? (
               <>
                 <Cloud size={14} className="text-emerald-500" />
-                <span>Synced</span>
+                <span>Cloudflare Synced</span>
               </>
             ) : (
               <>
                 <CloudOff size={14} className="text-amber-500" />
-                <span>{isOnline ? syncStatus : "Offline"}</span>
+                <span>{isOnline ? "Sync Pending" : "Offline"}</span>
               </>
             )}
-          </div>
+          </button>
 
           <div className="flex items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-800 ml-1">
             <div 
@@ -111,6 +153,13 @@ export default function Header() {
       <LocalNetworkModal
         isOpen={networkModalOpen}
         onClose={() => setNetworkModalOpen(false)}
+      />
+
+      {/* Centralised Auto-Update Modal */}
+      <AutoUpdateModal
+        isOpen={updateModalOpen}
+        onClose={() => setUpdateModalOpen(false)}
+        manualCheck={true}
       />
     </>
   );

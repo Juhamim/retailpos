@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "notes": "RetailFlow POS v1.0.0: Windows Desktop Standalone & Installer Packages, Dynamic NPCI UPI QR Payments, Customer Self-Service Cloudflare Setup Wizard, Central Cloudflare D1 Distributed SQLite Database, and Offline-First Multi-Terminal Synchronization.",
+  "pub_date": "2026-10-18T12:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "",
+      "url": "https://github.com/Juhamim/retailpos/releases/download/v1.0.0/RetailFlow_POS_v1.0.0_Setup.exe"
+    }
+  }
+}

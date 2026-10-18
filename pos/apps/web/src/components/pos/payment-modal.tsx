@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { PaymentMethod } from "@retailflow/shared-types";
-import { X, Banknote, CreditCard, Smartphone, Split, CheckCircle2, ArrowRight, BookOpen, Gift, Percent, QrCode } from "lucide-react";
+import { X, Banknote, CreditCard, Smartphone, Split, CheckCircle2, BookOpen, Gift } from "lucide-react";
 import { usePOSStore } from "@/stores/pos-store";
 import { useCustomerStore } from "@/stores/customer-store";
 import { useGiftCardStore } from "@/stores/giftcard-store";
@@ -16,7 +16,7 @@ interface PaymentModalProps {
 export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps) {
   const customerId = usePOSStore((s) => s.customerId);
   const customers = useCustomerStore((s) => s.customers);
-  const attachedCustomer = customers.find(c => c.id === customerId);
+  const attachedCustomer = customers.find((c) => c.id === customerId);
   const deductLoyaltyPoints = useCustomerStore((s) => s.deductLoyaltyPoints);
   const shopSettings = useSettingsStore((s) => s.settings.shop);
 
@@ -48,7 +48,8 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
   const change = Math.max(0, cashTendered - netDue);
 
   // Split calculation
-  const totalSplitPaid = (parseFloat(splitCash) || 0) + (parseFloat(splitUpi) || 0) + (parseFloat(splitCard) || 0);
+  const totalSplitPaid =
+    (parseFloat(splitCash) || 0) + (parseFloat(splitUpi) || 0) + (parseFloat(splitCard) || 0);
   const splitRemaining = Math.max(0, netDue - totalSplitPaid);
   const isSplitValid = Math.abs(netDue - totalSplitPaid) < 0.01;
 
@@ -71,7 +72,7 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
       setGiftCardError("Gift card has expired");
       return;
     }
-    
+
     setVerifiedGiftCard(card);
     setReference(card.cardCode);
   };
@@ -123,7 +124,9 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
   };
 
   const autoFillRemaining = (type: "cash" | "upi" | "card") => {
-    const current = totalSplitPaid - (parseFloat(type === "cash" ? splitCash : type === "upi" ? splitUpi : splitCard) || 0);
+    const current =
+      totalSplitPaid -
+      (parseFloat(type === "cash" ? splitCash : type === "upi" ? splitUpi : splitCard) || 0);
     const remainder = Math.max(0, netDue - current);
     if (type === "cash") setSplitCash(remainder.toFixed(2));
     if (type === "upi") setSplitUpi(remainder.toFixed(2));
@@ -132,8 +135,8 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
 
   useEffect(() => {
     if (selectedMethod === PaymentMethod.UPI && netDue > 0) {
-      const upiId = shopSettings.upiId || "contact@retailflowmart.in";
-      const payeeName = shopSettings.shopName || "RetailFlow POS";
+      const upiId = shopSettings.upiId || "retailflow@okaxis";
+      const payeeName = shopSettings.shopName || "RetailFlow Mart";
       const invoiceNumber = `BILL-${Date.now().toString().slice(-6)}`;
       generateUpiQrDataUrl({
         upiId,
@@ -146,32 +149,32 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 flex flex-col max-h-[92vh]">
+      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="p-4 border-b flex items-center justify-between bg-gray-50/80 shrink-0">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-950/50 shrink-0">
           <div>
-            <h2 className="text-base font-bold text-gray-900">Checkout & Payment</h2>
-            <p className="text-xs text-gray-500">Select payment method or split tender</p>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Checkout & Tender</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Select payment method or split across tenders</p>
           </div>
           <button
             onClick={onCancel}
-            className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Mode Selector & Total */}
-        <div className="p-4 bg-blue-50 border-b border-blue-100 flex items-center justify-between shrink-0">
+        <div className="p-4 bg-indigo-50/60 dark:bg-indigo-950/40 border-b border-indigo-100 dark:border-indigo-900/60 flex items-center justify-between shrink-0">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Amount Due</p>
-            <p className="text-2xl font-bold text-blue-950">₹{total.toFixed(2)}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">Amount Due</p>
+            <p className="text-2xl font-black text-indigo-950 dark:text-indigo-100">₹{total.toFixed(2)}</p>
           </div>
-          <div className="flex bg-white/90 border border-blue-200 rounded-xl p-1 shadow-2xs">
+          <div className="flex bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-xl p-1 shadow-2xs">
             <button
               onClick={() => setMode("single")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                mode === "single" ? "bg-blue-600 text-white shadow-xs" : "text-blue-900 hover:bg-blue-50"
+                mode === "single" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               Single
@@ -184,7 +187,7 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
                 setSplitCard("0");
               }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                mode === "split" ? "bg-blue-600 text-white shadow-xs" : "text-blue-900 hover:bg-blue-50"
+                mode === "split" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               <Split className="h-3 w-3" /> Split
@@ -198,53 +201,65 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
             <>
               {/* Attached Customer Profile & Tier Header */}
               {attachedCustomer && (
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                <div className="p-3 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs">
                   <div>
-                    <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                    <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-slate-100">
                       <span>{attachedCustomer.name}</span>
-                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                         {attachedCustomer.tier || "Regular"}
                       </span>
                       {(attachedCustomer.customDiscountPercent || 0) > 0 && (
-                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                          {attachedCustomer.customDiscountPercent}% Tier Discount
+                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+                          {attachedCustomer.customDiscountPercent}% Off
                         </span>
                       )}
                     </div>
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      Khata Limit: ₹{(attachedCustomer.creditLimit ?? 5000).toLocaleString()} • Current Debt: ₹{(attachedCustomer.creditBalance || 0).toFixed(2)}
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Khata Limit: ₹{(attachedCustomer.creditLimit ?? 5000).toLocaleString()} • Balance: ₹{(attachedCustomer.creditBalance || 0).toFixed(2)}
                     </p>
                   </div>
-                  <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">
+                  <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-1 rounded-lg">
                     ★ {attachedCustomer.loyaltyPoints} pts
                   </span>
                 </div>
               )}
 
-              {/* Customer Loyalty Redemption Panel */}
+              {/* Loyalty Points Redemption Box */}
               {attachedCustomer && attachedCustomer.loyaltyPoints > 0 && (
-                <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl space-y-2">
+                <div className="p-3 bg-indigo-50/40 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/60 rounded-xl space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-indigo-900 flex items-center gap-1">
-                      <Percent className="h-4 w-4 text-indigo-600" /> Redeem Loyalty Points
-                    </span>
-                    <span className="text-gray-500 font-medium">Available: {attachedCustomer.loyaltyPoints} pts</span>
+                    <span className="font-bold text-indigo-950 dark:text-indigo-200">Redeem Loyalty Points</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const maxRedeem = Math.min(attachedCustomer.loyaltyPoints, Math.ceil(total));
+                        setLoyaltyRedeemed(loyaltyRedeemed === maxRedeem ? 0 : maxRedeem);
+                      }}
+                      className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                    >
+                      {loyaltyRedeemed > 0 ? "Remove" : `Redeem Max (${Math.min(attachedCustomer.loyaltyPoints, Math.ceil(total))} pts)`}
+                    </button>
                   </div>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex items-center gap-2">
                     <input
                       type="number"
                       min={0}
                       max={Math.min(attachedCustomer.loyaltyPoints, Math.ceil(total))}
                       value={loyaltyRedeemed || ""}
                       onChange={(e) => {
-                        const val = Math.min(attachedCustomer.loyaltyPoints, Math.min(Math.ceil(total), Math.max(0, parseInt(e.target.value) || 0)));
+                        const val = Math.min(
+                          attachedCustomer.loyaltyPoints,
+                          Math.min(Math.ceil(total), Math.max(0, parseInt(e.target.value) || 0))
+                        );
                         setLoyaltyRedeemed(val);
                       }}
                       placeholder="Enter points to redeem"
-                      className="flex-grow h-9 px-3 border border-indigo-200 rounded-lg text-xs font-bold focus:outline-none"
+                      className="flex-grow h-9 px-3 border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-lg text-xs font-bold focus:outline-none"
                     />
                     {loyaltyRedeemed > 0 && (
-                      <span className="text-xs font-black text-indigo-700 whitespace-nowrap">- ₹{loyaltyAmount.toFixed(2)} Off</span>
+                      <span className="text-xs font-black text-indigo-700 dark:text-indigo-300 whitespace-nowrap">
+                        - ₹{loyaltyAmount.toFixed(2)} Off
+                      </span>
                     )}
                   </div>
                 </div>
@@ -270,8 +285,8 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
                     title={!pm.enabled ? "Select a customer on cart first" : undefined}
                     className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${
                       selectedMethod === pm.id
-                        ? "border-blue-600 bg-blue-50/70 text-blue-700 shadow-2xs"
-                        : "border-gray-200 hover:border-gray-300 text-gray-600 bg-white"
+                        ? "border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-2xs"
+                        : "border-slate-200 dark:border-slate-800 hover:border-slate-300 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800"
                     } ${!pm.enabled ? "opacity-35 cursor-not-allowed" : ""}`}
                   >
                     <pm.icon className="h-4.5 w-4.5" />
@@ -282,34 +297,36 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
 
               {/* UPI Dynamic QR Code Display */}
               {selectedMethod === PaymentMethod.UPI && (
-                <div className="space-y-3 bg-blue-50/60 p-4 rounded-2xl border border-blue-200 text-center animate-in fade-in">
-                  <div className="flex items-center justify-center gap-1.5 text-blue-900 font-bold text-xs">
-                    <Smartphone className="h-4 w-4 text-blue-600" />
+                <div className="space-y-3 bg-indigo-50/60 dark:bg-indigo-950/30 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-900/60 text-center animate-in fade-in">
+                  <div className="flex items-center justify-center gap-1.5 text-indigo-900 dark:text-indigo-200 font-bold text-xs">
+                    <Smartphone className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                     <span>Scan with any UPI App to Pay ₹{netDue.toFixed(2)}</span>
                   </div>
 
                   {upiQrUrl ? (
-                    <div className="inline-block p-2 bg-white rounded-2xl border border-blue-200 shadow-sm mx-auto">
+                    <div className="inline-block p-2.5 bg-white rounded-2xl border border-indigo-200 dark:border-indigo-800 shadow-sm mx-auto">
                       <img src={upiQrUrl} alt="Dynamic UPI QR" className="w-44 h-44 object-contain mx-auto" />
                     </div>
                   ) : (
-                    <div className="h-44 w-44 bg-white rounded-2xl border border-dashed border-blue-200 flex items-center justify-center mx-auto text-xs text-blue-400">
+                    <div className="h-44 w-44 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-indigo-200 dark:border-indigo-800 flex items-center justify-center mx-auto text-xs text-indigo-400">
                       Generating QR...
                     </div>
                   )}
 
-                  <div className="text-[11px] text-slate-600 font-medium">
-                    <p className="font-bold text-slate-800">UPI ID: <span className="font-mono text-blue-700">{shopSettings.upiId || "contact@retailflowmart.in"}</span></p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Google Pay • PhonePe • Paytm • BHIM • Cred</p>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
+                    <p className="font-bold text-slate-800 dark:text-slate-200">
+                      UPI ID: <span className="font-mono text-indigo-700 dark:text-indigo-400">{shopSettings.upiId || "retailflow@okaxis"}</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Google Pay • PhonePe • Paytm • BHIM • Cred</p>
                   </div>
 
-                  <div className="pt-2 border-t border-blue-200/60">
+                  <div className="pt-2 border-t border-indigo-200/60 dark:border-indigo-900/60">
                     <input
                       type="text"
                       value={reference}
                       onChange={(e) => setReference(e.target.value)}
                       placeholder="Enter UTR / Ref Number (Optional)"
-                      className="w-full h-9 px-3 border border-blue-200 rounded-xl text-xs bg-white focus:outline-none font-mono"
+                      className="w-full h-10 px-3.5 border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl text-xs focus:outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -317,17 +334,19 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
 
               {/* Cash Input */}
               {selectedMethod === PaymentMethod.CASH && (
-                <div className="space-y-3 bg-gray-50/80 p-3.5 rounded-xl border border-gray-200">
+                <div className="space-y-3 bg-slate-50/80 dark:bg-slate-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
                   <div>
-                    <div className="flex justify-between text-xs font-semibold text-gray-700 mb-1">
+                    <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                       <span>Cash Tendered (₹)</span>
-                      <span>Change: <strong className="text-emerald-700">₹{change.toFixed(2)}</strong></span>
+                      <span>
+                        Change: <strong className="text-emerald-700 dark:text-emerald-400">₹{change.toFixed(2)}</strong>
+                      </span>
                     </div>
                     <input
                       type="number"
                       value={cashAmount}
                       onChange={(e) => setCashAmount(e.target.value)}
-                      className="w-full h-11 text-center text-xl font-bold bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="w-full h-12 text-center text-2xl font-black bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                       autoFocus
                     />
                   </div>
@@ -348,7 +367,7 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
                           key={amt}
                           type="button"
                           onClick={() => setCashAmount(amt.toFixed(2))}
-                          className="flex-1 py-1.5 text-xs font-bold bg-white border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 text-gray-700 transition-colors"
+                          className="flex-1 py-1.5 text-xs font-bold bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:border-indigo-300 text-slate-800 dark:text-slate-200 rounded-lg transition-colors"
                         >
                           ₹{amt}
                         </button>
@@ -359,39 +378,39 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
 
               {/* Gift Card Input */}
               {selectedMethod === PaymentMethod.GIFT_CARD && (
-                <div className="space-y-3 bg-blue-50/50 p-3.5 rounded-xl border border-blue-200">
+                <div className="space-y-3 bg-indigo-50/50 dark:bg-indigo-950/30 p-3.5 rounded-xl border border-indigo-200 dark:border-indigo-900/60">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-700 block">Scan / Enter Gift Card Code</label>
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Scan / Enter Gift Card Code</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={giftCardCode}
                         onChange={(e) => setGiftCardCode(e.target.value)}
                         placeholder="e.g. GC-204928"
-                        className="flex-grow h-10 px-3.5 border border-gray-200 rounded-xl text-sm font-mono font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        className="flex-grow h-10 px-3.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl text-sm font-mono font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                       />
                       <button
                         type="button"
                         onClick={handleVerifyGiftCard}
-                        className="h-10 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl"
+                        className="h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl"
                       >
                         Verify
                       </button>
                     </div>
                   </div>
 
-                  {giftCardError && (
-                    <p className="text-xs font-semibold text-rose-600">⚠ {giftCardError}</p>
-                  )}
+                  {giftCardError && <p className="text-xs font-semibold text-rose-600">⚠ {giftCardError}</p>}
 
                   {verifiedGiftCard && (
                     <div className="space-y-1 text-xs">
-                      <div className="flex justify-between font-semibold text-emerald-800 bg-emerald-50 border border-emerald-100 p-2 rounded-lg">
+                      <div className="flex justify-between font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-800 p-2 rounded-lg">
                         <span>Card Balance:</span>
                         <span className="font-extrabold">₹{verifiedGiftCard.currentBalance.toFixed(2)}</span>
                       </div>
                       {verifiedGiftCard.currentBalance < netDue && (
-                        <p className="text-[10px] text-amber-700 font-bold">⚠ Note: Insufficient balance. Card has ₹{verifiedGiftCard.currentBalance.toFixed(2)} but order requires ₹{netDue.toFixed(2)}</p>
+                        <p className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">
+                          ⚠ Note: Insufficient balance. Card has ₹{verifiedGiftCard.currentBalance.toFixed(2)} but order requires ₹{netDue.toFixed(2)}
+                        </p>
                       )}
                     </div>
                   )}
@@ -400,19 +419,19 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
 
               {/* Reference / Credit Info Banner */}
               {selectedMethod === PaymentMethod.CREDIT && attachedCustomer && (
-                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl space-y-1.5 animate-in fade-in">
-                  <div className="flex items-center gap-1.5 text-rose-800">
+                <div className="p-3.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 rounded-xl space-y-1.5 animate-in fade-in">
+                  <div className="flex items-center gap-1.5 text-rose-800 dark:text-rose-300">
                     <BookOpen className="h-4 w-4" />
                     <span className="text-xs font-bold">Posting to Khata / Store Credit</span>
                   </div>
-                  <p className="text-[11px] text-rose-700 leading-normal">
-                    The total order amount will be charged as outstanding debt on <strong className="text-rose-900">{attachedCustomer.name}</strong>'s ledger profile.
+                  <p className="text-[11px] text-rose-700 dark:text-rose-400 leading-normal">
+                    The total order amount will be charged as outstanding debt on <strong className="text-rose-900 dark:text-rose-200">{attachedCustomer.name}</strong>'s ledger profile.
                   </p>
-                  <div className="flex justify-between text-xs text-rose-800 pt-1.5 border-t border-rose-200/50 font-bold">
+                  <div className="flex justify-between text-xs text-rose-800 dark:text-rose-300 pt-1.5 border-t border-rose-200/50 font-bold">
                     <span>Current Credit Debt:</span>
                     <span>₹{attachedCustomer.creditBalance.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-rose-800 font-bold">
+                  <div className="flex justify-between text-xs text-rose-800 dark:text-rose-300 font-bold">
                     <span>New Credit Debt:</span>
                     <span>₹{(attachedCustomer.creditBalance + netDue).toFixed(2)}</span>
                   </div>
@@ -421,15 +440,13 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
 
               {selectedMethod === PaymentMethod.CARD && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-700 block">
-                    Card Approval / Auth Code (Optional)
-                  </label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Card Approval / Auth Code (Optional)</label>
                   <input
                     type="text"
                     value={reference}
                     onChange={(e) => setReference(e.target.value)}
                     placeholder="e.g. Card Txn #9284"
-                    className="w-full h-10 px-3.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="w-full h-10 px-3.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
               )}
@@ -437,23 +454,23 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
           ) : (
             /* Split Payment UI */
             <div className="space-y-3">
-              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 flex justify-between items-center text-xs">
-                <span className="font-semibold text-amber-900">Remaining to Allocate:</span>
-                <span className={`font-bold text-sm ${splitRemaining === 0 ? "text-emerald-700" : "text-amber-800"}`}>
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-800 flex justify-between items-center text-xs">
+                <span className="font-bold text-amber-900 dark:text-amber-300">Remaining to Allocate:</span>
+                <span className={`font-black text-sm ${splitRemaining === 0 ? "text-emerald-700 dark:text-emerald-400" : "text-amber-800 dark:text-amber-300"}`}>
                   ₹{splitRemaining.toFixed(2)}
                 </span>
               </div>
 
               {/* Cash Row */}
-              <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-1">
+              <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-gray-800 flex items-center gap-1.5">
+                  <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <Banknote className="h-4 w-4 text-emerald-600" /> Cash
                   </span>
                   <button
                     type="button"
                     onClick={() => autoFillRemaining("cash")}
-                    className="text-[11px] font-semibold text-blue-600 hover:underline"
+                    className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                   >
                     Pay Balance
                   </button>
@@ -462,20 +479,20 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
                   type="number"
                   value={splitCash}
                   onChange={(e) => setSplitCash(e.target.value)}
-                  className="w-full h-9 px-3 bg-white border border-gray-300 rounded-lg text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full h-10 px-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
 
               {/* UPI Row */}
-              <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-1">
+              <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-gray-800 flex items-center gap-1.5">
-                    <Smartphone className="h-4 w-4 text-blue-600" /> UPI / QR
+                  <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Smartphone className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> UPI / QR
                   </span>
                   <button
                     type="button"
                     onClick={() => autoFillRemaining("upi")}
-                    className="text-[11px] font-semibold text-blue-600 hover:underline"
+                    className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                   >
                     Pay Balance
                   </button>
@@ -484,20 +501,20 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
                   type="number"
                   value={splitUpi}
                   onChange={(e) => setSplitUpi(e.target.value)}
-                  className="w-full h-9 px-3 bg-white border border-gray-300 rounded-lg text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full h-10 px-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
 
               {/* Card Row */}
-              <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-1">
+              <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-gray-800 flex items-center gap-1.5">
-                    <CreditCard className="h-4 w-4 text-purple-600" /> Card / POS
+                  <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <CreditCard className="h-4 w-4 text-purple-600 dark:text-purple-400" /> Card / POS
                   </span>
                   <button
                     type="button"
                     onClick={() => autoFillRemaining("card")}
-                    className="text-[11px] font-semibold text-blue-600 hover:underline"
+                    className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
                   >
                     Pay Balance
                   </button>
@@ -506,7 +523,7 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
                   type="number"
                   value={splitCard}
                   onChange={(e) => setSplitCard(e.target.value)}
-                  className="w-full h-9 px-3 bg-white border border-gray-300 rounded-lg text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full h-10 px-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -514,11 +531,11 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t bg-gray-50 flex gap-2 shrink-0">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex gap-2 shrink-0">
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 h-11 rounded-xl border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+            className="flex-1 h-11 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
             Cancel
           </button>
@@ -528,10 +545,11 @@ export function PaymentModal({ total, onComplete, onCancel }: PaymentModalProps)
             disabled={
               mode === "single"
                 ? (selectedMethod === PaymentMethod.CASH && cashTendered < netDue) ||
-                  (selectedMethod === PaymentMethod.GIFT_CARD && (!verifiedGiftCard || verifiedGiftCard.currentBalance < netDue))
+                  (selectedMethod === PaymentMethod.GIFT_CARD &&
+                    (!verifiedGiftCard || verifiedGiftCard.currentBalance < netDue))
                 : !isSplitValid
             }
-            className="flex-[2] h-11 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-[2] h-11 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <CheckCircle2 className="h-4 w-4" />
             Complete Sale (₹{netDue.toFixed(2)})
