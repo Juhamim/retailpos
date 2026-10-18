@@ -19,6 +19,9 @@ jobs:
       contents: write
       pages: write
       id-token: write
+    # Expose Cloudflare token at job level so it can be used in `if:` expressions safely
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
     steps:
       - name: Checkout Code Repository
@@ -92,7 +95,8 @@ jobs:
           prerelease: false
 
       - name: Deploy Web to Cloudflare Pages (Continuous Web Updates)
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        # Use the job-level env variable here; expressions cannot reference `secrets` directly in this position
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
         uses: cloudflare/pages-action@v1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
