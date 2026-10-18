@@ -36,6 +36,11 @@ export function CommandPalette() {
     { title: "User Access Roles & PINs", href: "/users", category: "Navigation" },
     { title: "Sales Returns & Restocking", href: "/returns", category: "Navigation" },
     { title: "Barcode Label Generator", href: "/labels", category: "Navigation" },
+    { title: "Store Settings & Terminal Configuration", href: "/settings", category: "Settings" },
+    { title: "Cloudflare Sync & Backup Setup", href: "/settings", category: "Settings" },
+    { title: "Store Details & Logo Upload", href: "/settings", category: "Settings" },
+    { title: "Tax & GST Configuration", href: "/settings", category: "Settings" },
+    { title: "POS Thermal Printer & UPI QR Settings", href: "/settings", category: "Settings" },
   ];
 
   const filteredItems = useMemo(() => {

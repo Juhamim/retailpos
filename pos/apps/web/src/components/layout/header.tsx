@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Cloud, CloudOff, Sun, Moon, Lock, QrCode, Wifi, RefreshCw, Sparkles } from "lucide-react";
+import { Search, Cloud, CloudOff, Sun, Moon, Lock, QrCode, Wifi, RefreshCw, Sparkles, Settings } from "lucide-react";
 import { useAppStore } from "@/stores/app-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useShiftStore } from "@/stores/shift-store";
@@ -98,6 +98,15 @@ export default function Header() {
             </button>
           )}
 
+          {/* Settings Button */}
+          <Link
+            href="/settings"
+            className="p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-all duration-200 hover:scale-[1.05] active:scale-[0.95]"
+            title="Store Settings & Cloudflare (Ctrl+,)"
+          >
+            <Settings size={18} className="text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" />
+          </Link>
+
           {/* Check for Updates Button */}
           <button
             onClick={() => setUpdateModalOpen(true)}
@@ -138,14 +147,17 @@ export default function Header() {
             )}
           </button>
 
-          <div className="flex items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-800 ml-1">
+          <Link
+            href="/settings"
+            className="flex items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-800 ml-1 group"
+            title={currentUser ? `${currentUser.firstName} (${currentUser.role}) - Open Settings` : "Admin - Open Settings"}
+          >
             <div 
-              className="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-md shadow-indigo-500/20 hover:scale-[1.05] active:scale-[0.95] transition-transform cursor-pointer" 
-              title={currentUser ? `${currentUser.firstName} (${currentUser.role})` : "Admin"}
+              className="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-md shadow-indigo-500/20 group-hover:scale-[1.05] active:scale-[0.95] transition-transform cursor-pointer" 
             >
               {initials}
             </div>
-          </div>
+          </Link>
         </div>
       </header>
 

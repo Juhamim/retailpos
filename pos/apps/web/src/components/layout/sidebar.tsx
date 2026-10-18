@@ -33,7 +33,7 @@ export default function Sidebar() {
   const shop = useSettingsStore((s) => s.settings.shop);
   const pathname = usePathname();
 
-  const userRole = currentUser?.role || UserRole.CASHIER;
+  const userRole = currentUser?.role || UserRole.OWNER;
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: [UserRole.OWNER, UserRole.MANAGER] },
@@ -50,8 +50,7 @@ export default function Sidebar() {
     { href: "/expenses", label: "Expenses", icon: Receipt, roles: [UserRole.OWNER, UserRole.MANAGER] },
     { href: "/accounts", label: "Accounts & Cash", icon: Wallet, roles: [UserRole.OWNER, UserRole.MANAGER] },
     { href: "/reports", label: "Reports & GST", icon: BarChart3, roles: [UserRole.OWNER, UserRole.MANAGER] },
-    { href: "/users", label: "Manage Users", icon: Users2, roles: [UserRole.OWNER] },
-    { href: "/settings", label: "Settings", icon: Settings, roles: [UserRole.OWNER] },
+    { href: "/users", label: "Manage Users", icon: Users2, roles: [UserRole.OWNER, UserRole.MANAGER] },
   ];
 
   const visibleNavItems = navItems.filter((item) => item.roles.includes(userRole));
@@ -133,22 +132,54 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-slate-800/80 p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div
-          className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}
+      {/* Pinned Bottom Section: Settings is ALWAYS visible and never scrolled off */}
+      <div className="px-3 py-2 border-t border-slate-800/80 shrink-0 bg-slate-900/60">
+        <Link
+          href="/settings"
+          className={`flex items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 group ${
+            pathname === "/settings" || pathname.startsWith("/settings/")
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+              : "text-slate-300 hover:bg-slate-800 hover:text-white"
+          } ${collapsed ? "justify-center px-0 py-2.5" : ""}`}
+          title="Store Settings & Cloudflare (Ctrl+,)"
         >
-          <div className="h-9 w-9 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-md shadow-indigo-500/20">
+          <Settings
+            size={20}
+            className={`shrink-0 transition-transform duration-200 group-hover:rotate-45 ${
+              pathname === "/settings" || pathname.startsWith("/settings/")
+                ? "text-white"
+                : "text-indigo-400 group-hover:text-white"
+            }`}
+          />
+          {!collapsed && (
+            <div className="flex items-center justify-between w-full">
+              <span className="font-semibold">Settings</span>
+              <span className="text-[10px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700/60">
+                Ctrl+,
+              </span>
+            </div>
+          )}
+        </Link>
+      </div>
+
+      <div className="border-t border-slate-800/80 p-3 bg-slate-900/90 backdrop-blur-sm">
+        <Link
+          href="/settings"
+          className={`flex items-center gap-3 group rounded-xl p-1 transition-colors hover:bg-slate-800/60 ${collapsed ? "justify-center" : ""}`}
+          title="Open Settings & Store Profile"
+        >
+          <div className="h-9 w-9 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
             {initials}
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
-              <p className="truncate text-sm font-semibold text-slate-100">{displayName}</p>
+              <p className="truncate text-sm font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors">{displayName}</p>
               <p className="truncate text-xs text-indigo-400 font-medium capitalize mt-0.5">
                 {role}
               </p>
             </div>
           )}
-        </div>
+        </Link>
       </div>
     </aside>
   );

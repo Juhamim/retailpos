@@ -30,8 +30,10 @@ import {
   Camera,
   Layers,
   Sparkles,
-  Plus
+  Plus,
+  Settings
 } from "lucide-react";
+import Link from "next/link";
 
 export default function POSScreen() {
   const {
@@ -296,6 +298,15 @@ export default function POSScreen() {
               <span>Held ({heldSales.length})</span>
             </button>
           )}
+
+          {/* Quick Settings Shortcut */}
+          <Link
+            href="/settings"
+            className="flex items-center justify-center h-10 w-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors shrink-0 shadow-2xs ml-auto sm:ml-0"
+            title="Terminal & Store Settings (Ctrl+,)"
+          >
+            <Settings className="h-4 w-4" />
+          </Link>
         </div>
 
         {/* Product Catalog Grid Body */}

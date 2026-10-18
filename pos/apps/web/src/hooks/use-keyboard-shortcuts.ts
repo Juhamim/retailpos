@@ -25,7 +25,13 @@ export function useKeyboardShortcuts() {
         setCommandPaletteOpen(!commandPaletteOpen);
       }
 
-      // 3. F-Key Navigation
+      // 3. Settings shortcut (Ctrl+, or Ctrl+Alt+S)
+      if (((e.ctrlKey || e.metaKey) && e.key === ",") || (e.ctrlKey && e.altKey && e.key.toLowerCase() === "s")) {
+        e.preventDefault();
+        router.push("/settings");
+      }
+
+      // 4. F-Key Navigation
       if (e.key === "F9") {
         e.preventDefault();
         router.push("/shifts");
@@ -51,6 +57,7 @@ export function useKeyboardShortcuts() {
           "F9 - Open Shifts / Register Reconciliation\n" +
           "F10 - Open Reports & Analytics Page\n" +
           "Ctrl+K - Search Actions & Products (Command Palette)\n" +
+          "Ctrl+, - Open Store & Terminal Settings\n" +
           "Ctrl+L - Quick Lock Cash Register Screen"
         );
       }
