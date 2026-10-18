@@ -69,7 +69,8 @@ jobs:
         run: pnpm --filter @retailflow/web build:export
         env:
           NEXT_PUBLIC_APP_VERSION: ${{ github.ref_name || inputs.version || '1.1.0' }}
-          NEXT_PUBLIC_BUILD_TIME: ${{ steps.build_time.outputs.now }}
+          # build_time step was not present in the original workflow; use the run id as a stable build identifier
+          NEXT_PUBLIC_BUILD_TIME: ${{ github.run_id }}
 
       - name: Build Tauri Desktop Executable and Sign Release Update Packages
         uses: tauri-apps/tauri-action@v0
@@ -79,8 +80,8 @@ jobs:
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
           projectPath: pos/apps/desktop
-          tagName: ${{ github.ref_name || format('v{0}', inputs.version) }}
-          releaseName: 'RetailFlow POS ${{ github.ref_name || format('v{0}', inputs.version) }}'
+          tagName: "${{ github.ref_name || format('v{0}', inputs.version) }}"
+          releaseName: "RetailFlow POS ${{ github.ref_name || format('v{0}', inputs.version) }}"
           releaseBody: |
             🚀 **RetailFlow POS Centralised Release**
             - Automated Continuous Update for Windows Desktop (.msi / .exe)
@@ -91,7 +92,7 @@ jobs:
           prerelease: false
 
       - name: Deploy Web to Cloudflare Pages (Continuous Web Updates)
-        if: env.CLOUDFLARE_API_TOKEN != ''
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
         uses: cloudflare/pages-action@v1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
